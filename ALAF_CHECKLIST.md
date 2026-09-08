@@ -6,11 +6,18 @@ A self-assessment for an organization preparing to give AI agents access to its 
 
 Every item is a **blocker, not a warning:** a `No` means the organization is not ready for that agent, not that it should proceed carefully.
 
-The items follow the order they must be done in: lock down access → clean the data → set the rules → screen at runtime → gate the actions → keep the record → close the outbound path.
+The items follow the order they must be done in: 
+1. Remediate Oversharing
+2. Deidentify Data
+3. Zero Data Retention
+4. Agent Manifesto
+5. Runtime PII Screening
+6. Human Approval Gate
+7. Provenance and Reversibility
 
 ---
 
-## (1) Remediate Oversharing
+## 1. Remediate Oversharing
 
 **Question**: Before granting access, have you audited and tightened permissions across **every** mechanism that can grant access to the data the agent will reach?
 
@@ -24,7 +31,7 @@ The items follow the order they must be done in: lock down access → clean the 
 
 ---
 
-## (2) Deidentify Data Before Agent Access
+## 2. Deidentify Data
 
 **Question**: Have you run a deidentification process over the data the agent will access or ensured it is deidentified?
 
@@ -33,11 +40,26 @@ The items follow the order they must be done in: lock down access → clean the 
 
 **Explanation**: Deidentification finds sensitive information in your data and removes or hides it before agents can reach it. [Microsoft Presidio](https://microsoft.github.io/presidio/) is a widely recommended open-source tool for this.
 
-Run this over the data you already have, before granting access, and again as new data arrives. Item (4) covers what this misses: data that shows up later, or comes from somewhere this run never looked.
+Run this over the data you already have, before granting access, and again as new data arrives. Item 5 covers what this misses: data that shows up later, or comes from somewhere this run never looked.
 
 ---
 
-## (3) Agent Manifesto
+## 3. Zero Data Retention
+
+**Question**: If you use a third-party AI API, have you configured it for zero data retention and checked the prompt caching TTL?
+
+- [ ] Yes
+- [ ] No
+
+**Explanation**: By default, most providers retain API inputs and outputs for a period (commonly 30 days) for abuse monitoring. Zero data retention turns that off, so your prompts and the data in them are not stored on their servers. It usually has to be requested and approved per account, not just toggled on.
+
+Prompt caching is separate and easy to miss. It stores part of your prompt on the provider's side to make repeat calls cheaper and faster, with its own time-to-live. Zero data retention does not necessarily switch it off, so a cache TTL can keep your data on their servers after you believed retention was disabled. Check both.
+
+This applies to whatever the agent sends, so it must be configured before the agent's first call to that API.
+
+---
+
+## 4. Agent Manifesto
 
 **Question**: Have you written an agent manifesto that agents must read before any task involving new data?
 
@@ -50,20 +72,20 @@ The manifesto must contain your data governance rules and be written in concise,
 
 ---
 
-## (4) Runtime PII Screening as an Agent Tool
+## 5. Runtime PII Screening
 
-**Question**: Does the agent check every new data source for personal information *before* reading it, and write what it finds somewhere the agent itself cannot read?
+**Question**: Does the agent check every new data source for personal information before reading it, and write what it finds somewhere the agent itself cannot read?
 
 - [ ] Yes
 - [ ] No
 
-**Explanation**: This check sits between the agent and the data, and runs on every new source, even data already cleaned under item (2). Item (2) covers the data you knew about; this catches what shows up later, or from somewhere you didn't expect.
+**Explanation**: This check sits between the agent and the data, and runs on every new source, even data already cleaned under item 2, to catch what shows up later or from somewhere unexpected.
 
 **The findings must go somewhere the agent cannot read**, for a person to review. An agent that can read its own findings can also repeat, summarize, or act on the very personal information it just flagged, which defeats the point of checking. An agent only reacts with `stop`, if PII found, or `continue`, if PII free.
 
 ---
 
-## (5) Human Approval Gate
+## 6. Human Approval Gate
 
 **Question**: Must a named human approve every consequential agent action before it takes effect, and is that gate impossible for the agent to bypass?
 
@@ -79,7 +101,7 @@ Two things are required, and the second is the one usually missed:
 
 ---
 
-## (6) Provenance and Reversibility
+## 7. Provenance and Reversibility
 
 **Question**: For any agent action, can you reconstruct what changed, when, and on whose authority, and undo it?
 
@@ -95,21 +117,6 @@ Keeping your data in version control (Git) gives you both: every change is saved
 
 ---
 
-## (7) Zero Data Retention
-
-**Question**: If you use a third-party AI API, have you configured it for zero data retention and checked the prompt caching TTL?
-
-- [ ] Yes
-- [ ] No
-
-**Explanation**: By default, most providers retain API inputs and outputs for a period (commonly 30 days) for abuse monitoring. Zero data retention turns that off, so your prompts and the data in them are not stored on their servers. It usually has to be requested and approved per account, not just toggled on.
-
-Prompt caching is separate and easy to miss. It stores part of your prompt on the provider's side to make repeat calls cheaper and faster, with its own time-to-live. Zero data retention does not necessarily switch it off, so a cache TTL can keep your data on their servers after you believed retention was disabled. Check both.
-
-This applies to whatever the agent sends, which is why it belongs after items (2) and (4): anything they failed to remove leaves your control the moment it is sent.
-
----
-
 ## Scoring
 
 | Result | Meaning |
@@ -117,7 +124,7 @@ This applies to whatever the agent sends, which is why it belongs after items (2
 | All `Yes` | Ready to give the agent access to your data, with the safeguards above in place. |
 | Any `No` | Not ready. Fix the gap before granting access. Watching closely is not a substitute. |
 
-Items (1) and (2) must come first. Once an agent has read data that was left open or uncleaned, it has already read it, and taking the access away afterwards does not undo that.
+Items 1 and 2 must come first. Once an agent has read data that was left open or uncleaned, it has already read it, and taking the access away afterwards does not undo that.
 
 ---
 
@@ -125,7 +132,7 @@ Items (1) and (2) must come first. Once an agent has read data that was left ope
 
 ### Access-granting mechanisms to audit
 
-Referenced from item (1). Check every way access can be granted, including ways that never show up in your main user directory:
+Referenced from item 1. Check every way access can be granted, including ways that never show up in your main user directory:
 
 | Way access is granted | Examples |
 |---|---|
