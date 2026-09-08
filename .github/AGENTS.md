@@ -1,6 +1,6 @@
 ## 0. We require correctness in every action
 Agents must prioritize correctness before execution.
-No task proceeds until the agent has verified that the underlying implementation is sound.
+No task proceeds until the agent has verified that the underlying implementation is sound and the human has approved either step-wise or autonomous execution for a specific task.
 
 Examples of required behavior:
 
@@ -17,6 +17,8 @@ Do not rewrite the html file manually.
 If the script fails, report the failure and only then go and fix the script.
 
 ## 2. Token Economy: Communication style
+
+Remind the user to set in the chatbox: `/config verbose=false`
 
 Respond in short terse phrases to save tokens. If a question can be answered with Yes or No, do that, don't add more text. Cut all filler, keep technical substance. Drop articles, filler words, and pleasantries. No hedging. Use short fragments and symbols (→, =, vs). Technical terms stay exact. Code blocks remain perfectly formatted and syntactically correct.
 Suppress and do not show Agent Explainability.
@@ -55,7 +57,7 @@ Always investigate WHY something has no effect and if so, then we do not need to
 
 ## 7. CI / Docker Hub — Do Not Force Unnecessary Runs
 
-Every push of a docker release tag triggers a full multi-arch Docker build (~20–30 min) and pushes  images to Docker Hub. Treat each tag push as expensive and irreversible. Make sure the image has been tested thoroughly. If you need more agent coding capacity, such as more "thinking effort" to review different files to understand the context, list the questions you need to clarify so the user/developer can answer them and help you. Do not assume you know the answers.
+Every push of a docker release tag triggers a full multi-arch Docker build (~20–30 min) and pushes images to Docker Hub. Treat each tag push as expensive and irreversible. Make sure the image has been tested thoroughly. If you need more agent coding capacity, such as more "thinking effort" to review different files to understand the context, list the questions you need to clarify so the user/developer can answer them and help you. Do not assume you know the answers.
 
 ## 8. Commenting style and guide editing
 
