@@ -4,6 +4,8 @@ A self-assessment for an organization preparing to give AI agents access to its 
 
 **How to use it**: one person answers on behalf of the organization, before any agent is granted data access. 
 
+**Deployment model:** applies to third-party API, self-hosted/private-cloud, or air-gapped deployments alike. Only item 3 (Zero Data Retention) doesn't apply when there's no third party involved. All other items apply regardless.
+
 Every item is a **blocker, not a warning:** a `No` means the organization is not ready for that agent, not that it should proceed carefully.
 
 The items follow the order they must be done in: 
@@ -46,7 +48,7 @@ Run this over the data you already have, before granting access, and again as ne
 
 ## 3. Zero Data Retention
 
-**Question**: If you use a third-party AI API, have you configured it for zero data retention and checked the prompt caching TTL?
+**Question**: If you or your organisation uses a third-party AI API, was it configured for zero data retention and the prompt caching TTL checked?
 
 - [ ] Yes
 - [ ] No
