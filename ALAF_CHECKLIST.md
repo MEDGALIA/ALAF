@@ -2,20 +2,19 @@
 
 A self-assessment for an organization preparing to give AI agents access to its data.
 
-**How to use it**: one person answers on behalf of the organization, before any agent is granted data access. 
-
-**Deployment model:** applies to third-party API, self-hosted/private-cloud, or air-gapped deployments alike. Only item 3 (Zero Data Retention) doesn't apply when there's no third party involved. All other items apply regardless.
-
-Every item is a **blocker, not a warning:** a `No` means the organization is not ready for that agent, not that it should proceed carefully.
+**How to use it**: one person answers on behalf of the organization, before any agent is granted data access. Applies to third-party API, self-hosted/private-cloud, and air-gapped deployments.
 
 The items follow the order they must be done in: 
 1. Remediate Oversharing
 2. Deidentify Data
-3. Zero Data Retention
+3. Zero Data Retention\*
 4. Agent Manifesto
 5. Runtime PII Screening
 6. Human Approval Gate
 7. Provenance and Reversibility
+
+\* Every `No` answer, except for (3) Zero Data Retention when no third party API is used, is a **blocker.** 
+A `No` means the organization is not ready for that agent.
 
 ---
 
