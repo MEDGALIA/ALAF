@@ -45,7 +45,7 @@ We decided to rename a pipeline from `reshuffle` to `synthetic_cohort_workflow`.
 Example: you add a scripts\build-release-package.mjs
 But if not documented in the readme how do developers know it exists and how to use it?
 
-Add information about every new script either to a developer .md guide, depending on its reusability value.
+Add information about every new script to a developer.md guide, depending on its reusability value.
 
 ## 6. Always investigate inconsistencies that look like errors
 Something that looks like an error may not cause a failure but if spotted, it should be investigated and reported. Example:  
@@ -78,10 +78,11 @@ Example:
       const hadSessionCookie = /(^|;\s*)connect\.sid=/.test(req.headers.cookie || "");
 ```
 Write it like this:
+```
     if (!hasUsableSession) {
       // Name WHICH host was checked and whether a session cookie even arrived.
       const hadSessionCookie = /(^|;\s*)connect\.sid=/.test(req.headers.cookie || "");
-
+```
 
 ## 9. Please follow the README.md
 if README.md is wrong let the user know, or ask the user.
