@@ -121,7 +121,7 @@ They say the same thing!
 Please add ToDo Checklists in these format at the top of each issue or planning file. Keep it short and link to sections with more details.
 ```
 ## ToDo Checklist
-- [x] 0. Save this approved plan as `drafts/VANTAGE-Tech-Radar-Sync-Plan.md`
+- [x] 0. Save this approved plan as `developer_guides/VANTAGE-Tech-Radar-Sync-Plan.md`
 - [x] 1. Add `openpyxl` to `src/scripts/requirements.txt` and install into `.venv`
 - [x] 2. Write `src/scripts/radar_sync_common.py` (shared helpers, reusable across any architecture)
 - [x] 3. Write the read-only data-quality scan as described in section `Data Quality Scan`
@@ -134,3 +134,11 @@ Always work in a branch. Reuse a branch whenever possible, it is fine to add use
 ## 16. Do not chain commands
 
 Do not chain commands with &&, ||, or pipes, and do not use multi-line blocks or heredocs. Each Bash call runs one plain command so it can be matched against the agent settings.local.json allow list.
+
+## 17. Do not refer to gitignored files in guides
+
+Do not refer to gitignored files in guides. If a file is in a gitgnored folder called "drafts" do not refer to it from a file that will be pushed to GitHub. 
+
+## 18. Keep public planning guides at a high level of abstraction
+
+Public facing planning guides in GitHub, do not need to mention minor features/tasks that were planned but then dropped. They should mention what was built, and what is planned but not build yet, at a high level of abstraction. 

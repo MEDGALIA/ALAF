@@ -1,10 +1,11 @@
 # Implementation Plan
 
-The implementation plan has two steps so far:
+The implementation plan has four steps so far:
 
 1. VT Radar xlsx ⇄ JSON Two-Way Sync (Status: In progress)
-2. Agentic Process to update the VT Radar (Not implemented)
-3. Agentic Assessment Landscape Framework (ALAF)
+2. VT Radar Google Drive Viewing Mirror (Status: Done)
+3. Agentic Process to update the VT Radar (Not implemented)
+4. Agentic Assessment Landscape Framework (ALAF)
 
 ## VT Radar xlsx ⇄ JSON Two-Way Sync
 
@@ -72,26 +73,23 @@ Stamping happens *after* the merge, not on the open PR: `dismiss_stale_reviews` 
 
 No git CLI or branch-pushing is required of contributors or curators — every step is available through GitHub's native web UI (edit-in-browser, drag-and-drop upload, "Approve" button, "Merge" button).
 
-### Status
+### ToDo Checklist
+- [x] 1. Two-way sync between the xlsx workbook and the machine-readable `data/json/` mirror — scripts documented in `scripts-guide.md`
+- [x] 2. Controlled-vocabulary schema (`Dictionary`/`Vocabulary`/`Standards` tabs) backing the workbook — 76 vocabulary terms, 4 standards
+- [x] 3. Branch protection + CODEOWNERS requiring curator review before merge
+- [x] 4. Automated `Verified By`/`Last Verified` stamping from the approving review, on merge
+- [x] 5. Admin-approval gate blocking an unauthorized row deletion
+- [x] 6. Developer/user documentation — this file, `scripts-guide.md`, `user_guides/VT_RADAR.md`
+- [ ] 7. Enforce the verification rule on a hand-edited JSON commit directly, not only on conversions through the sync script
 
-| Component | Status |
-| --- | --- |
-| `src/scripts/radar_sync_common.py` | Done |
-| `src/scripts/tech_radar_analysis.py` | Done — see `data/reports/workbook_analysis.md` |
-| Workbook metadata tabs (`Dictionary`/`Vocabulary`/`Standards`) | Done — 18 columns (incl. `ID`, `Added/Edited By`), 76 vocabulary terms, 4 standards |
-| `.github/CODEOWNERS` for `data/json/**` | Done — names `@pbuendia` |
-| Branch protection on `main` | Done — a **repository ruleset** (not classic protection): PR + 1 code-owner approval, `check` required, no deletion, no force-push. Bypass actors: the `vt-radar-verification-bot` App and repository admins. Classic protection was removed; the two stack, and a ruleset is the only form with a bypass that covers *required status checks* |
-| `src/scripts/xlsx_to_json.py` | Done — schema-driven; auto-assigns `ID`; validates workbook structure before converting; detects cross-sheet row moves vs. deletions; `--actor` stamps `Added/Edited By` |
-| `src/scripts/json_to_xlsx.py` | Done — rebuilds the entire workbook from `data/json/`. Also applies conditional-formatting cell colours, entirely data-driven from a `Colour` field on the `Dictionary`/`Vocabulary` tabs (no hardcoded colours in Python) — `controlled_single` columns get one fill per term (`Maturity Level`'s 4 terms, `Resource Type`'s 14), `controlled_multi` columns get one blanket "populated" fill (`Topic Focus`; `Agentic Features Covered` not yet assigned a colour). Adding or recolouring a term needs only a `Vocabulary` edit, no code change. See `drafts/Color-coded-standards.md` for how the original workbook's colours drifted onto the wrong columns after later schema migrations, and `drafts/VANTAGE-Tech-Radar-Sync-Plan.md` checklist item 20 for the fix |
-| `src/scripts/check_deletion_authorization.py` | Done — blocks a PR that deletes a row unless an admin approved it |
-| GitHub Action — xlsx upload → json diff (`xlsx-to-json.yml`) | Done, confirmed on a real PR |
-| GitHub Action — deletion authorization (`deletion-authorization.yml`) | Done, confirmed on a real PR |
-| GitHub Action — publish (`workflow_dispatch` → Release) | Dropped — the xlsx is already in sync at merge time, so nothing needs regenerating |
-| GitHub Action — stamp `Verified By` from the approval (`stamp-verification.yml`) | **Done, confirmed on a real PR (#25).** On merge, reads the approving review and writes `Verified By` = approver, `Last Verified` = the approval's date into both the JSON and the xlsx, then pushes to `main` as the `vt-radar-verification-bot` App. Only rows changed in the PR whose verification is still blank are stamped; the `no-verify` label skips it. Always produces a run and logs its decision, and comments the outcome on the PR. `workflow_dispatch` with a PR number re-runs it manually |
-| `src/scripts/preflight_stamp.py` | Done — read-only check that stamping *can* succeed: App exists, secrets present, App and admins in the ruleset bypass, no classic protection stacked, no `[skip ci]` in any workflow, App token minted before `actions/checkout`. Run it before any live test |
-| Developer/user documentation | This file + `scripts-guide.md` + `user_guides/VT_RADAR.md` |
+## VT Radar Google Drive Viewing Mirror
 
-**Known gap**: no check yet enforces the verification rule against a hand-edited JSON commit (that `Verified By` is never non-empty while its content hash differs from the verified baseline) — today it's enforced only when `xlsx_to_json.py` itself does the conversion.
+GitHub's built-in file preview doesn't render `.xlsx` conditional formatting, so the `Maturity Level`/`Resource Type`/`Topic Focus` colour-coding is invisible there. A one-way GitHub Action mirrors `data/VANTAGE-Technology-Radar.xlsx` to a fixed, read-only Google Sheet on every push to `main` that changes the file, converting it to a native Sheet so the formatting renders. `main` stays the only source of truth. 
+
+### ToDo Checklist
+- [x] 1. One-way sync to a Google Sheet on every push to `main` that changes the workbook — see `scripts-guide.md`
+- [x] 2. Config and secret wired through `.github/RADAR-CONFIG` and repo secrets
+
 
 ## Agentic Process to update the VT Radar
 

@@ -121,7 +121,7 @@ Old values are never lost — `data/json/` is git-tracked, so `git log`/`git bla
 
 **Structure validation**: before converting anything, `validate_structure()` checks that every data sheet's columns exactly match what `Dictionary` declares for it — same headers, same order. A mismatch (missing column, unexpected column, wrong order) raises immediately and **no JSON is written at all**, so a malformed upload never partially converts.
 
-**Moves vs. deletions**: a row whose `ID` is missing from one sheet is checked against every other data sheet's current contents. Found elsewhere (e.g. moved from `Knowledgebase` to `Deprecated`, with the `ID` copied along) → reported as a move. Found nowhere → reported as a deletion. This is **detection only** — the script doesn't block a true deletion, since it has no notion of who's running it or whether they're authorized; enforcing "only an admin-merged PR may delete a row" is a GitHub Action-side check, not yet built (see `drafts/VANTAGE-Tech-Radar-Sync-Plan.md`'s Approval System section).
+**Moves vs. deletions**: a row whose `ID` is missing from one sheet is checked against every other data sheet's current contents. Found elsewhere (e.g. moved from `Knowledgebase` to `Deprecated`, with the `ID` copied along) → reported as a move. Found nowhere → reported as a deletion. This is **detection only** — the script doesn't block a true deletion itself; that enforcement (only an admin-approved PR may delete a row) is a separate GitHub Action check, `deletion-authorization.yml`.
 
 ## `json_to_xlsx.py`
 
@@ -170,7 +170,7 @@ No "corrected" value is ever suggested — deciding what a bad cell *should* say
 .\.venv\Scripts\python src\scripts\sync_gdrive_mirror.py --xlsx data\VANTAGE-Technology-Radar.xlsx --key-file PATH
 ```
 
-Pushes the workbook to a Google Sheet — see `drafts/VT-Radar-GDrive-Mirror-Plan.md` for the design. `main` stays the source of truth; this only pushes, never reads the Sheet back.
+Pushes the workbook to a Google Sheet — see `implementation-plan.md`'s "VT Radar Google Drive Viewing Mirror" section for the design. `main` stays the source of truth; this only pushes, never reads the Sheet back.
 
 **Arguments**
 
