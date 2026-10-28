@@ -385,13 +385,13 @@
     },
     {
       "id": "f51ea180",
-      "resource_name": "Anthropic Tools API",
-      "url": "https://docs.anthropic.com/en/docs/tools",
+      "resource_name": "Tool Use with Claude (Messages API)",
+      "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview",
       "source_organization": "Anthropic",
-      "last_verified": "",
-      "verified_by": "",
-      "added_edited_by": "Claude",
-      "last_updated": "",
+      "last_verified": "2026-10-22",
+      "verified_by": "Gnana Bharathy",
+      "added_edited_by": "@gnanabharathy",
+      "last_updated": "2026-10-22",
       "version": "",
       "publication_version_date": "",
       "resource_type": "API Reference",
@@ -405,10 +405,10 @@
       ],
       "alaf_checklist_mapping": [],
       "relevance_to_research_cyberinfrastructure": "Useful for safe tool-calling agents",
-      "maturity_level": "Emerging",
-      "notes_key_takeaways": "Strong safety posture.",
+      "maturity_level": "Mature",
+      "notes_key_takeaways": "We may need to confirm the level of maturity, but is more than emerging. Separates client tools, which run in the user’s own environment, from server tools that Anthropic runs. Strict mode enforces the tool schema. The client/server split matters for deciding where research data is processed.",
       "discovery_date": "2026-04-01",
-      "_content_hash": "ce493deeb67bf3f15e6ba177856db1be51c0c9ce9bc290b9245597a450651f90"
+      "_content_hash": "853855dc0ddf65146b5667383f5d13770faf11705f24a8f877bd1eab39b09ce8"
     },
     {
       "id": "89f36cc1",
