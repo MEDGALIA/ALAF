@@ -8,23 +8,23 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Ways to contribute
 
-- **Report a bug or gap** — open a [GitHub issue](https://github.com/MEDGALIA/ALAF/issues)
+- **Report a bug or gap**: open a [GitHub issue](https://github.com/MEDGALIA/ALAF/issues)
   describing what's wrong or missing. For the VT Radar knowledge base, include
   which row/term is affected and why.
-- **Propose a knowledge base change** — see [Updating the VT Radar knowledge base](#updating-the-vt-radar-knowledge-base)
+- **Propose a knowledge base change**: see [Updating the VT Radar knowledge base](#updating-the-vt-radar-knowledge-base)
   below.
-- **Improve tooling or docs** — see [Development setup](#development-setup).
-- **Discuss framework direction** — since the RDA Working Group has not yet
+- **Improve tooling or docs**: see [Development setup](#development-setup).
+- **Discuss framework direction**: since the RDA Working Group has not yet
   been formed, larger design questions are best raised as an issue first,
   before investing time in a PR.
 
 ## Ground rules
 
-- Every change goes through a pull request — no direct pushes to `main`.
+- Every change goes through a pull request, no direct pushes to `main`.
 - Keep PRs focused; unrelated changes make review harder and slow everyone down.
 - Write commit messages that explain *why*, not just *what*.
 - Don't introduce secrets, credentials, or personal data into the repository.
-- Sign off on the [Code of Conduct](CODE_OF_CONDUCT.md) — be respectful and
+- Sign off on the [Code of Conduct](CODE_OF_CONDUCT.md): be respectful and
   assume good faith.
 
 ## Updating the VT Radar knowledge base
@@ -40,7 +40,7 @@ GitOps workflow, described in full in
    ```powershell
    .\.venv\Scripts\python src\scripts\xlsx_to_json.py
    ```
-   Use `--fresh` only after a schema (column) change — see
+   Use `--fresh` only after a schema (column) change, see
    [`developer_guides/scripts-guide.md`](developer_guides/scripts-guide.md) for why.
 3. Optionally regenerate the coverage report to sanity-check your change:
    ```powershell
@@ -50,7 +50,7 @@ GitOps workflow, described in full in
    open a pull request. Changes under `data/json/**` require review from a
    curator (see [`.github/CODEOWNERS`](.github/CODEOWNERS)) before merging.
 
-Do not hand-edit files under `data/json/` — they're generated. Edit the xlsx
+Do not hand-edit files under `data/json/`, they're generated. Edit the xlsx
 and re-run the sync script instead.
 
 ## Development setup

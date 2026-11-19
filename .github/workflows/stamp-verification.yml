@@ -2,24 +2,16 @@ name: Stamp verification on approval
 
 # After a PR merges, if it carried an APPROVED review, writes that reviewer
 # and the approval date into Verified By/Last Verified for whichever rows
-# actually changed in the PR and are still blank. Approving a PR is meant
-# to be the act of verifying; nothing wrote that into the data before this.
-# See drafts/VANTAGE-Tech-Radar-Sync-Plan.md, Step 4.
+# actually changed in the PR and are still blank.
 #
-# Pushes straight to main: the built-in Actions app can't be granted
-# bypass_pull_request_allowances (tested -- accepted with HTTP 200, then
-# silently dropped), so this authenticates as the vt-radar-verification-bot
-# GitHub App instead, which main's branch protection names as a bypass
-# actor. VT_RADAR_APP_ID/VT_RADAR_APP_PRIVATE_KEY mint a short-lived
-# installation token at runtime; no long-lived secret is ever stored.
+# Pushes straight to main: authenticates as the vt-radar-verification-bot
+# GitHub App, which main's branch protection names as a bypass actor.
+# VT_RADAR_APP_ID/VT_RADAR_APP_PRIVATE_KEY mint a short-lived installation
+# token at runtime; no long-lived secret is ever stored.
 #
 # This job deliberately has no job-level `if:`. It always runs and always
-# logs the decision it made, because a job skipped by a condition leaves an
-# unexplained empty entry in the Actions tab -- and that is indistinguishable
-# at a glance from the failure mode that broke PR #16, where a [skip ci] in
-# the PR's head commit stopped GitHub creating a run at all. Always running
-# means "no entry in the Actions tab" now has exactly one meaning: GitHub
-# never dispatched the event.
+# logs the decision it made, so "no entry in the Actions tab" has exactly
+# one meaning: GitHub never dispatched the event. (#16)
 #
 # No loop risk: this workflow's own stamp commit only touches
 # verified_by/last_verified, which content_hash() excludes from what counts
@@ -92,13 +84,10 @@ jobs:
             echo "merge_sha=${MERGE_SHA}"
           } >> "$GITHUB_OUTPUT"
 
-      # Minted BEFORE the checkout on purpose. actions/checkout persists
-      # whatever token it is given as a git http.extraheader, and that header
-      # beats any credentials placed in the remote URL later -- so a checkout
-      # using the default GITHUB_TOKEN makes the push go out as
-      # github-actions[bot], which main's protection rejects with a 403
-      # (observed on PR #20). Checking out *with* the App token instead means
-      # the persisted credentials are already the right ones.
+      # Minted BEFORE the checkout: actions/checkout persists whatever token
+      # it is given as a git http.extraheader, so checking out with the App
+      # token means the push goes out as vt-radar-verification-bot, not
+      # github-actions[bot] (which main's protection rejects, #20).
       - name: Mint an installation token for vt-radar-verification-bot
         id: app-token
         if: steps.decide.outputs.proceed == 'true'
@@ -133,8 +122,7 @@ jobs:
         run: |
           set -euo pipefail
           # First parent of the merge commit is main as it stood before this
-          # PR landed. Derived from git rather than read from the event
-          # payload, so the manual workflow_dispatch path behaves identically.
+          # PR landed.
           BASE_SHA=$(git rev-parse "${MERGE_SHA}^1")
           echo "Comparing against ${BASE_SHA} (main before this PR)"
           git worktree add "${GITHUB_WORKSPACE}/base" "$BASE_SHA"

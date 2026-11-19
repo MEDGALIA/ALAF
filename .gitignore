@@ -225,5 +225,5 @@ drafts/
 developer_guides_html/
 user_guides_html/
 
-# Claude Code local (personal) settings — not shared
+# Claude Code local (personal) settings, not shared
 .claude/settings.local.json

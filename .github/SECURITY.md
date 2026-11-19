@@ -11,7 +11,7 @@ Instead, use GitHub's private vulnerability reporting for this repository:
 3. Describe the issue, including steps to reproduce, potential impact, and
    any suggested fix if you have one.
 
-This opens a private advisory visible only to the maintainers — no public
+This opens a private advisory visible only to the maintainers, no public
 disclosure, no email required. We'll acknowledge reports as promptly as we
 can and keep you updated as we investigate and address the issue.
 
@@ -28,7 +28,7 @@ GitHub Action (`.github/workflows/`), and a curated knowledge base
 - Dependency vulnerabilities in `src/scripts/requirements.txt`
 
 Data-quality issues in the knowledge base itself (e.g. an incorrect or
-outdated entry) are not security reports — please file those as a regular
+outdated entry) are not security reports, please file those as a regular
 [GitHub issue](https://github.com/MEDGALIA/ALAF/issues) instead.
 
 ## Supported Versions

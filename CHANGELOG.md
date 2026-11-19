@@ -15,17 +15,17 @@ once a first release is tagged. Until then, changes are tracked under
   `Knowledgebase`, `Deprecated`, and `SOTA Coding Agents Benchmarks` data
   tabs, plus normalized `Dictionary` / `Vocabulary` / `Standards` metadata
   tabs driving a schema-based xlsx ⇄ JSON sync.
-- `src/scripts/xlsx_to_json.py` — converts the workbook into `data/json/`,
+- `src/scripts/xlsx_to_json.py`: converts the workbook into `data/json/`,
   with content-hash-based verification tracking (`Verified By` / `Last
   Verified` cleared automatically when a row's content changes since the
   last known baseline).
-- `src/scripts/tech_radar_analysis.py` — read-only workbook analysis
+- `src/scripts/tech_radar_analysis.py`: read-only workbook analysis
   (row/column coverage, controlled-vocabulary coverage, ontology-mapping
   coverage, near-duplicate review candidates), written to
   `data/reports/workbook_analysis.md`.
-- `src/scripts/radar_sync_common.py` — shared schema-loading helpers for the
+- `src/scripts/radar_sync_common.py`: shared schema-loading helpers for the
   VT Radar tooling.
-- `src/scripts/docx_to_md.py` and `src/scripts/md_to_html.py` — document
+- `src/scripts/docx_to_md.py` and `src/scripts/md_to_html.py`: document
   conversion pipeline for `developer_guides/`.
 - Controlled-vocabulary terms backed by external standards where a genuine
   match exists: EDAM, NIST AI RMF 1.0, ACM Computing Classification System
