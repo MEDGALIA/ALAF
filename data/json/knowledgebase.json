@@ -56,12 +56,12 @@
       "resource_name": "RDA Data Director Agentic AI Blueprint",
       "url": "https://www.rd-alliance.org/groups/data-director-agentic-ai-blueprint/outputs/data-director-agentic-ai-tool-blueprint/",
       "source_organization": "Microsoft, RDA",
-      "last_verified": "2026-09-01",
-      "verified_by": "Paty Buendia",
-      "added_edited_by": "Paty Buendia",
-      "last_updated": "2026-09-01",
-      "version": "v0.1 DRAFT",
-      "publication_version_date": "",
+      "last_verified": "",
+      "verified_by": "",
+      "added_edited_by": "@pbuendia",
+      "last_updated": "2026-11-19",
+      "version": "1.0",
+      "publication_version_date": "2026-09-03",
       "resource_type": "Specification",
       "agentic_features_covered": [
         "FAIR data",
@@ -76,7 +76,7 @@
       "maturity_level": "Emerging",
       "notes_key_takeaways": "",
       "discovery_date": "2026-05-26",
-      "_content_hash": "72068308257a63a8f84baf12f1260be4f9b6b073d53a51c7022ce4195cabe28f"
+      "_content_hash": "bbaf7094470246dcadc7aa85ec153666d9661e2308319f3f7f371601c9b717da"
     },
     {
       "id": "161f1860",
@@ -195,12 +195,12 @@
       "resource_name": "Kaggle Prototype to Production Whitepaper",
       "url": "https://www.kaggle.com/whitepaper-prototype-to-production",
       "source_organization": "Kaggle/Google",
-      "last_verified": "2026-05-15",
-      "verified_by": "Paty Buendia",
-      "added_edited_by": "Paty Buendia",
-      "last_updated": "2026-05-15",
+      "last_verified": "",
+      "verified_by": "",
+      "added_edited_by": "@pbuendia",
+      "last_updated": "2026-11-19",
       "version": "NA",
-      "publication_version_date": "",
+      "publication_version_date": "2026-05-01",
       "resource_type": "Whitepaper",
       "agentic_features_covered": [
         "Deployment patterns",
@@ -216,7 +216,7 @@
       "maturity_level": "Mature",
       "notes_key_takeaways": "Technical guide to the operational life cycle of AI agents, focusing on deployment & security",
       "discovery_date": "2025-11-14",
-      "_content_hash": "7ba838eaca5006e794b69db46e6d95db298ad25f3fcf542871e0f553437bc83b"
+      "_content_hash": "96fd8cdc18d34ca30cb60bc6c751c025a3809aa1e6124bcd394dba05e9a2a4ef"
     },
     {
       "id": "f488464f",
