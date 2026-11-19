@@ -268,12 +268,12 @@ def render_report(
     checklist_drift: dict | None = None,
 ) -> str:
     L = [
-        "# VANTAGE Technology Radar — Workbook Analysis",
+        "# VANTAGE Technology Radar: Workbook Analysis",
         "",
         f"Source: `{xlsx_path.as_posix()}`",
         "",
         "Read-only scan. No cell in the workbook was modified. Findings are flagged, not "
-        "corrected — fixes are a human judgment call.",
+        "corrected, fixes are a human judgment call.",
         "",
         "## Per-sheet row counts and cell anomalies",
         "",
@@ -346,7 +346,7 @@ def render_report(
             L += [f"- row {r}: `{name}` is missing `{col}`" for r, name, col in rows]
             L.append("")
     else:
-        L += ["None — every populated row has a value in each controlled column that applies to it.", ""]
+        L += ["None, every populated row has a value in each controlled column that applies to it.", ""]
 
     # ---- ontology coverage
     L += [
@@ -408,14 +408,14 @@ def render_report(
         else:
             if d["orphan_terms"]:
                 L += [
-                    "**Terms with no matching checklist item** — the item was renamed or "
+                    "**Terms with no matching checklist item**: the item was renamed or "
                     "removed, so rows tagged with these now point at nothing:",
                     "",
                 ]
                 L += [f"- `{t}`" for t in sorted(d["orphan_terms"])] + [""]
             if d["unmapped_items"]:
                 L += [
-                    "**Checklist items with no matching term** — no resource can be tagged "
+                    "**Checklist items with no matching term**: no resource can be tagged "
                     "against these:",
                     "",
                 ]

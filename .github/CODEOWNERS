@@ -1,4 +1,4 @@
-# VT Radar knowledge base — changes here require curator review.
+# VT Radar knowledge base, changes here require curator review.
 # See developer_guides/implementation-plan.md for the full GitOps design.
 data/json/** @pbuendia @gnanabharathy @seykim10 @patbuen1
 # The workbook itself, so a contributor's upload triggers a review request

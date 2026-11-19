@@ -55,13 +55,13 @@ was used in docker\github-workflows-docker-publish.yml but for some reason it di
 The agent was using that file by error and did not realize that the file is old and irrelevant. We later deleted it.
 Always investigate WHY something has no effect and if so, then we do not need to keep it or it will confuse the AI agent and the developer.
 
-## 7. CI / Docker Hub — Do Not Force Unnecessary Runs
+## 7. CI / Docker Hub: Do Not Force Unnecessary Runs
 
 Every push of a docker release tag triggers a full multi-arch Docker build (~20–30 min) and pushes images to Docker Hub. Treat each tag push as expensive and irreversible. Make sure the image has been tested thoroughly. If you need more agent coding capacity, such as more "thinking effort" to review different files to understand the context, list the questions you need to clarify so the user/developer can answer them and help you. Do not assume you know the answers.
 
 ## 8. Commenting style and guide editing
 
-Keep comments and developer guides concise. No mention of why decisions were made or issues that were solved.
+Keep comments and developer guides concise. No mention of why decisions were made, but mention, if applicable, the Github issue number that is relevant by adding it in parenthesis.
 E.g.: A developer following a guide to deploy a release doesn't need an incident report
 
 
@@ -80,7 +80,7 @@ Example:
 Write it like this:
 ```
     if (!hasUsableSession) {
-      // Name WHICH host was checked and whether a session cookie even arrived.
+      // Name WHICH host was checked and whether a session cookie even arrived. (#1120)
       const hadSessionCookie = /(^|;\s*)connect\.sid=/.test(req.headers.cookie || "");
 ```
 
@@ -110,9 +110,9 @@ Example: if an app is deployed to Google App Engine, and the app has a feature t
 
 DO NOT repeat yourself
 Example:
-Line 266: For a bulk mechanical edit (a typo fixed across 12 rows), the curator did not re-check 12 URLs — auto-stamping would inflate verification.
+Line 266: For a bulk mechanical edit (a typo fixed across 12 rows), the curator did not re-check 12 URLs, so auto-stamping would inflate verification.
 and a few lines down you wrote: 
-Line 272: Worked example: a typo fixed across 12 rows. The curator did not re-open 12 URLs. Without the label, all 12 are marked verified — a false claim. With it, none are. No friction in the common case (one row, genuinely checked), one click in the case that would otherwise lie.
+Line 272: Worked example: a typo fixed across 12 rows. The curator did not re-open 12 URLs. Without the label, all 12 are marked verified, a false claim. With it, none are. No friction in the common case (one row, genuinely checked), one click in the case that would otherwise lie.
 
 They say the same thing!
 

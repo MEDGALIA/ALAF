@@ -4,7 +4,7 @@ This guide is for **contributors** updating the VANTAGE Technology Radar (VT Rad
 
 ## What you're editing
 
-`data/VANTAGE-Technology-Radar.xlsx` is the human-facing copy of the knowledge base — a normal Excel workbook with three data tabs (`Knowledgebase`, `Deprecated`, `SOTA Coding Agents Benchmarks`) plus three tabs that document the schema and controlled vocabulary (`Dictionary`, `Vocabulary`, `Standards`). A machine-readable mirror lives in `data/json/` and is regenerated automatically from your xlsx.
+`data/VANTAGE-Technology-Radar.xlsx` is the human-facing copy of the knowledge base, a normal Excel workbook with three data tabs (`Knowledgebase`, `Deprecated`, `SOTA Coding Agents Benchmarks`) plus three tabs that document the schema and controlled vocabulary (`Dictionary`, `Vocabulary`, `Standards`). A machine-readable mirror lives in `data/json/` and is regenerated automatically from your xlsx.
 
 ## Step by step
 
@@ -13,8 +13,8 @@ This guide is for **contributors** updating the VANTAGE Technology Radar (VT Rad
 3. **Upload your edited copy.** From the folder listing, "Add file" → "Upload files" (or drag your file directly onto the page), select your edited file with the **exact same name**, `VANTAGE-Technology-Radar.xlsx`, so it replaces the old one, or you will get an **error**.
 4.  **Click the "Propose Changes" button**. Accept the branch name provided. This will commit as a new branch and open a pull request (PR). You don't need to understand what a branch is, just follow the prompt.
 5. **Click "Create Pull Request" button** in the page that opens. 
-6. **Wait for the automatic sync.** Once your PR is open, GitHub automatically converts your xlsx into the machine-readable JSON files and adds that as a second commit on your PR. You don't trigger this yourself — it just happens. You will see the warning **Merging is blocked** as the curator needs to approve the merge.
-7. **The curator verifies and approves.** They check the resources themselves and click Approve — that approval *is* the verification.
+6. **Wait for the automatic sync.** Once your PR is open, GitHub automatically converts your xlsx into the machine-readable JSON files and adds that as a second commit on your PR. You don't trigger this yourself, it just happens. You will see the warning **Merging is blocked** as the curator needs to approve the merge.
+7. **The curator verifies and approves.** They check the resources themselves and click Approve, that approval *is* the verification.
 8. **The curator merges.** Once merged, your changes are live, and `Verified By`/`Last Verified` are filled in automatically from the approval.
 
 ## Rules the sync follows automatically
@@ -23,9 +23,9 @@ You don't need to do anything special for these, they just happen when your file
 
 - **Leave `Verified By` and `Last Verified` alone.** They record that a curator personally checked the resource, not that the row was edited. Whenever you change a row's content, both fields are cleared automatically, and they are filled back in from the curator's approval once the PR merges. Don't fill them in yourself, and don't put someone else's name in them.
 - **Every row has an `ID` column** (column A on each data tab) that you shouldn't touch. It's how the sync recognizes "this is the same row as before" even if you rename it, and it gets assigned automatically for any new row you add, just leave it blank and it'll be filled in for you.
-- **Moving a row between tabs** (e.g. a resource that's now deprecated): copy the *entire* row — including its `ID` - from `Knowledgebase` into `Deprecated`, then delete it from `Knowledgebase`. As long as the `ID` comes along, the sync recognizes it as a move, not a deletion, and its history is preserved.
+- **Moving a row between tabs** (e.g. a resource that's now deprecated): copy the *entire* row, including its `ID`, from `Knowledgebase` into `Deprecated`, then delete it from `Knowledgebase`. As long as the `ID` comes along, the sync recognizes it as a move, not a deletion, and its history is preserved.
 - **Deleting a row outright** (no move, it's just gone) blocks the PR until a repo admin approves it. If you're not sure whether something should be deleted or moved to `Deprecated`, ask first.
-- **Your file's structure is checked before anything else happens.** If a column got renamed, removed, or reordered by accident, the sync refuses to run at all rather than guessing — you'll need to fix the structure and re-upload. Stick to editing cell *values*, not column headers or their order, unless you're deliberately proposing a schema change (in which case, propose it in the Issues).
+- **Your file's structure is checked before anything else happens.** If a column got renamed, removed, or reordered by accident, the sync refuses to run at all rather than guessing, you'll need to fix the structure and re-upload. Stick to editing cell *values*, not column headers or their order, unless you're deliberately proposing a schema change (in which case, propose it in the Issues).
 - **`Added/Edited By`** records who last touched a row. When you upload via GitHub it's set to your GitHub handle automatically on any row you actually changed.
 
 ## For the curator

@@ -1,13 +1,11 @@
 name: Sync VT Radar to Google Drive mirror
 
-# Pushes data/VANTAGE-Technology-Radar.xlsx to a Google Sheet for viewing --
-# GitHub's own file preview doesn't render .xlsx conditional formatting, so
-# the Maturity Level / Resource Type / Topic Focus colours are invisible
-# there. See drafts/VT-Radar-GDrive-Mirror-Plan.md.
+# Pushes data/VANTAGE-Technology-Radar.xlsx to a Google Sheet for viewing
+# (GitHub's own file preview doesn't render .xlsx conditional formatting).
 #
 # main stays the only source of truth: this only pushes, never reads the
-# Sheet back. The Sheet is shared Viewer-only to humans, so nobody can edit
-# the mirror in the first place.
+# Sheet back. The Sheet is shared Viewer-only, so nobody can edit the
+# mirror directly.
 
 on:
   push:

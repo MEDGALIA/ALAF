@@ -2,7 +2,7 @@
 # regardless of each contributor's local core.autocrlf setting.
 * text=auto eol=lf
 
-# Binary files must never go through line-ending normalization —
+# Binary files must never go through line-ending normalization,
 # doing so would corrupt them.
 *.xlsx binary
 *.xls binary
