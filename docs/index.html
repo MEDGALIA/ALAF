@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>VT Radar Curator UI</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>VT Radar Curator UI</h1>
+    <div id="auth-area"></div>
+  </header>
+
+  <main>
+    <section id="table-section">
+      <div id="controls">
+        <input id="search-box" type="search" placeholder="Search resource name or URL" />
+        <select id="filter-type"></select>
+        <select id="filter-maturity"></select>
+      </div>
+      <div id="verify-bar"></div>
+      <table id="radar-table">
+        <thead>
+          <tr>
+            <th>Verify</th>
+            <th>Resource Name</th>
+            <th>Sheet</th>
+            <th>Resource Type</th>
+            <th>Maturity Level</th>
+            <th>Verified By</th>
+            <th>Last Verified</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </section>
+
+    <aside id="drawer"></aside>
+
+    <section id="working-set-section">
+      <h2>Working set</h2>
+      <div id="working-set"></div>
+    </section>
+
+    <section id="approvals-section">
+      <h2>Pending approvals</h2>
+      <div id="approvals"></div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

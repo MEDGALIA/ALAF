@@ -14,7 +14,7 @@ This guide is for **contributors** updating the VANTAGE Technology Radar (VT Rad
 4.  **Click the "Propose Changes" button**. Accept the branch name provided. This will commit as a new branch and open a pull request (PR). You don't need to understand what a branch is, just follow the prompt.
 5. **Click "Create Pull Request" button** in the page that opens. 
 6. **Wait for the automatic sync.** Once your PR is open, GitHub automatically converts your xlsx into the machine-readable JSON files and adds that as a second commit on your PR. You don't trigger this yourself, it just happens. You will see the warning **Merging is blocked** as the curator needs to approve the merge.
-7. **The curator verifies and approves.** They check the resources themselves and click Approve, that approval *is* the verification.
+7. **The curator verifies and approves.** They check the resources themselves and click Approve, that approval *is* the verification. See [Approving workflow runs from forks](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/approve-runs-from-forks) if the PR shows "Some checks are waiting for approval."
 8. **The curator merges.** Once merged, your changes are live, and `Verified By`/`Last Verified` are filled in automatically from the approval.
 
 ## Rules the sync follows automatically
@@ -32,7 +32,9 @@ You don't need to do anything special for these, they just happen when your file
 
 **Approving the PR *is* the verification.** You never type into `Verified By`/`Last Verified`, a bot (an automated program, not AI) fills them in for you once the PR merges. 
 
-1. If the Checks tab says *"N workflows awaiting approval"*, click **Approve Workflows to run**. This only lets the automation run, it records nothing about verification.
+GitHub never lets a PR's author approve their own PR, even with Admin access. If you opened this PR yourself, a different curator listed in [`.github/CODEOWNERS`](../.github/CODEOWNERS) has to approve it instead.
+
+1. If the Checks tab says *"N workflows awaiting approval"*, click **Approve Workflows to run**. This only lets the automation run, it records nothing about verification. See [Approving workflow runs from forks](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/approve-runs-from-forks) for the full procedure.
 2. Read the `data/json/` diff, and actually open the resource links to check them.
 3. **Files changed** → **Review changes** → **Approve** → **Submit review**. *This* is the verification.
 4. **Merge pull request**. Confirm the header then reads **"Merged"** (purple), not "Closed" (red).

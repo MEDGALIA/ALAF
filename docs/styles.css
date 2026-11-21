@@ -1,0 +1,112 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+#table-section {
+  grid-column: 1 / 2;
+}
+
+#controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.row-name {
+  cursor: pointer;
+  color: #0b5fb3;
+}
+
+#drawer {
+  display: none;
+  grid-column: 2 / 3;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  background: #fafafa;
+  align-self: start;
+}
+
+#drawer.open {
+  display: block;
+}
+
+.form-field {
+  margin-bottom: 0.6rem;
+}
+
+.form-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.multi-select {
+  max-height: 10rem;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  padding: 0.3rem;
+}
+
+.term {
+  display: block;
+  font-weight: normal;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.auto-managed {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+#working-set-section,
+#approvals-section {
+  grid-column: 2 / 3;
+}
+
+.pr-card {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+body:not(.can-write) #verify-bar,
+body:not(.can-write) #submit-working-set,
+body:not(.can-write) .pr-approve,
+body:not(.can-write) .pr-reject {
+  display: none;
+}
