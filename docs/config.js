@@ -4,6 +4,7 @@ export const REPO_NAME = "ALAF";
 export const DEFAULT_BRANCH = "main";
 export const DATA_DIR = "data/json";
 export const DICTIONARY_FILE = "dictionary.json";
+export const SUMMARIES_DIR = "data/summaries";
 
 // Reads go here: no rate limit and CORS-enabled for public repos, unlike the
 // 60/hour unauthenticated REST API. Writes still use the API. (#36)

@@ -80,6 +80,18 @@ export async function fetchRawJson(path, ref) {
   return res.json();
 }
 
+export async function fetchRawText(path, ref) {
+  const res = await fetch(`${RAW_BASE}/${encodeURIComponent(ref)}/${path}`, { cache: "no-store" });
+  if (!res.ok) throw new ApiError(describe(res.status, "", path), res.status, path);
+  return res.text();
+}
+
+// Only way to discover which files exist; raw.githubusercontent cannot list a
+// directory. One request, and the caller degrades gracefully if it fails.
+export async function listDirectory(path, ref) {
+  return request(`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}?ref=${encodeURIComponent(ref)}`);
+}
+
 function b64DecodeUnicode(b64) {
   const binary = atob(b64.replace(/\n/g, ""));
   return new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)));

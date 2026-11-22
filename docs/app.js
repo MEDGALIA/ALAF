@@ -6,11 +6,13 @@ import {
   SHEETS,
   SHEET_LABELS,
   DEFAULT_SHEET,
+  SUMMARIES_DIR,
   VERIFY_WORKFLOW_FILE,
   STALE_VERIFICATION_DAYS,
   TOKEN_HELP_URL,
 } from "./config.js";
 import * as gh from "./github-api.js";
+import { parseFrontMatter, renderMarkdown } from "./markdown.js";
 import {
   loadDictionary,
   groupedEditableFields,
@@ -37,12 +39,13 @@ const state = {
   dictionary: null,
   sheets: {},
   staged: new Map(), // "sheet::id" -> record
+  summaries: new Map(), // row id -> summary filename
   selected: new Set(), // "sheet::id" for verification
   user: null,
   canWrite: false,
   // Knowledgebase is the sheet curators work in, so it is the default scope
   // rather than an unfiltered mix of all three. (#36)
-  filters: { search: "", sheet: DEFAULT_SHEET, type: "", maturity: "", needsVerification: false },
+  filters: { search: "", sheet: DEFAULT_SHEET, type: "", maturity: "", needsVerification: false, hasSummary: false },
   sort: { key: "resource_name", dir: "asc" },
 };
 
@@ -149,10 +152,28 @@ async function loadAllData() {
       })
     );
     state.sheets = Object.fromEntries(entries);
+    await loadSummaryIndex();
     buildFilterOptions();
     renderTable();
   } catch (err) {
     renderError(host, err.message, () => loadAllData());
+  }
+}
+
+// Summary files are named "<id>_<resource name>.md", so the id prefix maps a
+// file to its row without storing a link on the row itself. (#36)
+async function loadSummaryIndex() {
+  try {
+    const files = await gh.listDirectory(SUMMARIES_DIR, DEFAULT_BRANCH);
+    state.summaries = new Map(
+      files
+        .filter((f) => f.type === "file" && f.name.endsWith(".md"))
+        .map((f) => [f.name.split("_")[0], f.name])
+    );
+  } catch {
+    // Listing needs the REST API, which anonymous callers can exhaust. The
+    // rest of the page works without it, so leave the index empty.
+    state.summaries = new Map();
   }
 }
 
@@ -163,13 +184,14 @@ function allRows() {
 }
 
 function visibleRows() {
-  const { search, sheet, type, maturity, needsVerification } = state.filters;
+  const { search, sheet, type, maturity, needsVerification, hasSummary } = state.filters;
   const needle = search.trim().toLowerCase();
   let rows = allRows().filter(({ sheetName, record }) => {
     if (sheet && sheetName !== sheet) return false;
     if (type && record.resource_type !== type) return false;
     if (maturity && record.maturity_level !== maturity) return false;
     if (needsVerification && verificationStatus(record).level === "verified") return false;
+    if (hasSummary && !state.summaries.has(record.id)) return false;
     if (!needle) return true;
     return `${record.resource_name ?? ""} ${record.url ?? ""} ${record.source_organization ?? ""}`
       .toLowerCase()
@@ -297,6 +319,7 @@ function renderRow({ sheetName, record }, showVerify) {
         // Only when viewing every sheet at once, since the column is gone.
         state.filters.sheet ? "" : `<span class="badge">${escapeHtml(SHEET_LABELS[sheetName] || sheetName)}</span>`
       }
+      ${state.summaries.has(record.id) ? `<span class="badge badge--summary" title="A summary is available">Summary</span>` : ""}
     </td>
     <td>${escapeHtml(record.source_organization || "")}</td>
     <td>${escapeHtml(record.resource_type || "")}</td>
@@ -328,7 +351,9 @@ function showDrawer(sheetName, record) {
       </div>
       <button type="button" class="btn btn--ghost" id="drawer-close" aria-label="Close editor">×</button>
     </header>
-    <form id="drawer-form" class="drawer__body">
+    <div class="drawer__body">
+    ${summarySection(record.id)}
+    <form id="drawer-form">
       ${groups
         .map(
           (group) => `<fieldset class="group" ${readOnly ? "disabled" : ""}>
@@ -348,6 +373,7 @@ function showDrawer(sheetName, record) {
         </dl>
       </fieldset>
     </form>
+    </div>
     <footer class="drawer__foot">
       ${
         readOnly
@@ -360,6 +386,7 @@ function showDrawer(sheetName, record) {
     </footer>`;
 
   openDrawer();
+  wireSummary(record.id);
   $("#drawer-close").addEventListener("click", closeDrawer);
   $("#drawer-cancel").addEventListener("click", closeDrawer);
   if (readOnly) {
@@ -370,6 +397,51 @@ function showDrawer(sheetName, record) {
   } else {
     $("#drawer-stage").addEventListener("click", () => stageEdit(sheetName, record));
   }
+}
+
+// Reference material while verifying a row, so it sits above the form but
+// stays collapsed: the body runs to a page or two. (#36)
+function summarySection(rowId) {
+  const file = state.summaries.get(rowId);
+  if (!file) return "";
+  return `<details class="summary" id="summary-block">
+    <summary class="summary__toggle">
+      <span class="summary__label">Summary</span>
+      <span class="summary__meta" id="summary-meta"></span>
+    </summary>
+    <div class="summary__body" id="summary-body"></div>
+  </details>`;
+}
+
+function wireSummary(rowId) {
+  const file = state.summaries.get(rowId);
+  if (!file) return;
+  const block = $("#summary-block");
+  let loaded = false;
+  block.addEventListener("toggle", async () => {
+    if (!block.open || loaded) return;
+    loaded = true;
+    const body = $("#summary-body");
+    renderLoading(body, "Loading summary…");
+    try {
+      const text = await gh.fetchRawText(`${SUMMARIES_DIR}/${file}`, DEFAULT_BRANCH);
+      const { meta, body: markdown } = parseFrontMatter(text);
+      const by = [
+        meta.summarized_by ? `Summarized by ${meta.summarized_by}` : "",
+        meta.reviewed_by ? `reviewed by ${meta.reviewed_by}` : "",
+        meta.summarized_date || "",
+      ].filter(Boolean);
+      $("#summary-meta").textContent = by.join(" · ");
+      body.innerHTML = `${renderMarkdown(markdown)}
+        <p class="summary__source">
+          <a href="${gh.repoUrl()}/blob/${DEFAULT_BRANCH}/${SUMMARIES_DIR}/${encodeURIComponent(file)}"
+             target="_blank" rel="noopener">View the summary file on GitHub</a>
+        </p>`;
+    } catch (err) {
+      loaded = false;
+      renderError(body, err.message);
+    }
+  });
 }
 
 function renderField(field, value) {
@@ -729,13 +801,18 @@ function wireControls() {
     state.filters.needsVerification = e.target.checked;
     renderTable();
   });
+  $("#filter-has-summary").addEventListener("change", (e) => {
+    state.filters.hasSummary = e.target.checked;
+    renderTable();
+  });
   $("#filters-reset").addEventListener("click", () => {
-    state.filters = { search: "", sheet: DEFAULT_SHEET, type: "", maturity: "", needsVerification: false };
+    state.filters = { search: "", sheet: DEFAULT_SHEET, type: "", maturity: "", needsVerification: false, hasSummary: false };
     $("#search").value = "";
     $("#filter-sheet").value = DEFAULT_SHEET;
     $("#filter-type").value = "";
     $("#filter-maturity").value = "";
     $("#filter-needs-verification").checked = false;
+    $("#filter-has-summary").checked = false;
     renderTable();
   });
   $("#overlay").addEventListener("click", closeDrawer);
