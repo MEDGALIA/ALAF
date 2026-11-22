@@ -5,6 +5,7 @@ import {
   DATA_DIR,
   SHEETS,
   SHEET_LABELS,
+  DEFAULT_SHEET,
   VERIFY_WORKFLOW_FILE,
   STALE_VERIFICATION_DAYS,
   TOKEN_HELP_URL,
@@ -39,7 +40,9 @@ const state = {
   selected: new Set(), // "sheet::id" for verification
   user: null,
   canWrite: false,
-  filters: { search: "", sheet: "", type: "", maturity: "", needsVerification: false },
+  // Knowledgebase is the sheet curators work in, so it is the default scope
+  // rather than an unfiltered mix of all three. (#36)
+  filters: { search: "", sheet: DEFAULT_SHEET, type: "", maturity: "", needsVerification: false },
   sort: { key: "resource_name", dir: "asc" },
 };
 
@@ -189,6 +192,7 @@ function buildFilterOptions() {
     if (record.maturity_level) maturities.add(record.maturity_level);
   }
   fillSelect($("#filter-sheet"), Object.keys(SHEETS).map((s) => [s, SHEET_LABELS[s]]), "All sheets");
+  $("#filter-sheet").value = state.filters.sheet;
   fillSelect($("#filter-type"), [...types].sort().map((t) => [t, t]), "All types");
   fillSelect($("#filter-maturity"), [...maturities].sort().map((m) => [m, m]), "All maturity levels");
 }
@@ -206,6 +210,8 @@ function renderTable() {
   const rows = visibleRows();
   const total = allRows().length;
 
+  const sheet = state.filters.sheet;
+  $("#sheet-label").textContent = sheet ? SHEET_LABELS[sheet] || sheet : "All sheets";
   $("#row-count").textContent = total === 0 ? "" : `${rows.length} of ${total} rows`;
 
   if (total === 0) {
@@ -228,7 +234,7 @@ function renderTable() {
         <tr>
           ${showVerify ? `<th scope="col" class="col-check"><span class="sr-only">Select for verification</span></th>` : ""}
           ${sortableHeader("resource_name", "Resource")}
-          ${sortableHeader("sheet", "Sheet")}
+          ${sortableHeader("source_organization", "Organization")}
           ${sortableHeader("resource_type", "Type")}
           ${sortableHeader("maturity_level", "Maturity")}
           ${sortableHeader("last_verified", "Verification")}
@@ -287,9 +293,12 @@ function renderRow({ sheetName, record }, showVerify) {
     <td>
       <button type="button" class="link-btn" data-open="${escapeHtml(key)}">${escapeHtml(record.resource_name || "(untitled)")}</button>
       ${staged ? `<span class="badge badge--staged">Staged</span>` : ""}
-      <div class="cell-sub">${escapeHtml(record.source_organization || "")}</div>
+      ${
+        // Only when viewing every sheet at once, since the column is gone.
+        state.filters.sheet ? "" : `<span class="badge">${escapeHtml(SHEET_LABELS[sheetName] || sheetName)}</span>`
+      }
     </td>
-    <td>${escapeHtml(SHEET_LABELS[sheetName] || sheetName)}</td>
+    <td>${escapeHtml(record.source_organization || "")}</td>
     <td>${escapeHtml(record.resource_type || "")}</td>
     <td>${escapeHtml(record.maturity_level || "")}</td>
     <td>
@@ -307,6 +316,9 @@ function showDrawer(sheetName, record) {
   const groups = groupedEditableFields(state.dictionary, sheetName);
   const auto = autoManagedFields(state.dictionary, sheetName);
   const drawer = $("#drawer");
+  // Signed-out visitors read the row but cannot stage work they could never
+  // submit, the pull request call would only fail with a 401. (#36)
+  const readOnly = !state.canWrite;
 
   drawer.innerHTML = `
     <header class="drawer__head">
@@ -319,7 +331,7 @@ function showDrawer(sheetName, record) {
     <form id="drawer-form" class="drawer__body">
       ${groups
         .map(
-          (group) => `<fieldset class="group">
+          (group) => `<fieldset class="group" ${readOnly ? "disabled" : ""}>
             <legend>${escapeHtml(group.title)}</legend>
             ${group.fields.map((f) => renderField(f, current[f.key])).join("")}
           </fieldset>`
@@ -337,14 +349,27 @@ function showDrawer(sheetName, record) {
       </fieldset>
     </form>
     <footer class="drawer__foot">
-      <button type="button" class="btn btn--ghost" id="drawer-cancel">Cancel</button>
-      <button type="button" class="btn btn--primary" id="drawer-stage">Stage edit</button>
+      ${
+        readOnly
+          ? `<p class="drawer__note">Sign in to edit this resource.</p>
+             <button type="button" class="btn btn--ghost" id="drawer-cancel">Close</button>
+             <button type="button" class="btn btn--primary" id="drawer-signin">Sign in to edit</button>`
+          : `<button type="button" class="btn btn--ghost" id="drawer-cancel">Cancel</button>
+             <button type="button" class="btn btn--primary" id="drawer-stage">Stage edit</button>`
+      }
     </footer>`;
 
   openDrawer();
   $("#drawer-close").addEventListener("click", closeDrawer);
   $("#drawer-cancel").addEventListener("click", closeDrawer);
-  $("#drawer-stage").addEventListener("click", () => stageEdit(sheetName, record));
+  if (readOnly) {
+    $("#drawer-signin").addEventListener("click", () => {
+      closeDrawer();
+      openSignInDialog();
+    });
+  } else {
+    $("#drawer-stage").addEventListener("click", () => stageEdit(sheetName, record));
+  }
 }
 
 function renderField(field, value) {
@@ -705,9 +730,9 @@ function wireControls() {
     renderTable();
   });
   $("#filters-reset").addEventListener("click", () => {
-    state.filters = { search: "", sheet: "", type: "", maturity: "", needsVerification: false };
+    state.filters = { search: "", sheet: DEFAULT_SHEET, type: "", maturity: "", needsVerification: false };
     $("#search").value = "";
-    $("#filter-sheet").value = "";
+    $("#filter-sheet").value = DEFAULT_SHEET;
     $("#filter-type").value = "";
     $("#filter-maturity").value = "";
     $("#filter-needs-verification").checked = false;

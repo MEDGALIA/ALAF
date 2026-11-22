@@ -16,6 +16,8 @@ export const SHEETS = {
   "SOTA Coding Agents Benchmarks": "sota_coding_agents_benchmarks",
 };
 
+export const DEFAULT_SHEET = "Knowledgebase";
+
 export const SHEET_LABELS = {
   Knowledgebase: "Knowledgebase",
   Deprecated: "Deprecated",
