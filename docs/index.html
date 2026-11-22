@@ -2,51 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>VT Radar Curator UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VT Radar Curator</title>
+  <meta name="description" content="Browse, edit and verify the VANTAGE Technology Radar knowledge base." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
-    <h1>VT Radar Curator UI</h1>
-    <div id="auth-area"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar__brand">
+      <h1>VT Radar Curator</h1>
+      <p class="topbar__sub">VANTAGE Technology Radar knowledge base</p>
+    </div>
+    <div class="topbar__auth" id="auth"></div>
   </header>
 
-  <main>
-    <section id="table-section">
-      <div id="controls">
-        <input id="search-box" type="search" placeholder="Search resource name or URL" />
-        <select id="filter-type"></select>
-        <select id="filter-maturity"></select>
+  <noscript>
+    <p class="banner banner--error">
+      This page needs JavaScript. Browse the radar data directly in the
+      <a href="https://github.com/MEDGALIA/ALAF/tree/main/data/json">repository</a> instead.
+    </p>
+  </noscript>
+
+  <main id="main">
+    <section class="panel panel--table" aria-labelledby="browse-heading">
+      <div class="panel__head">
+        <h2 id="browse-heading">Browse</h2>
+        <span class="panel__meta" id="row-count"></span>
       </div>
-      <div id="verify-bar"></div>
-      <table id="radar-table">
-        <thead>
-          <tr>
-            <th>Verify</th>
-            <th>Resource Name</th>
-            <th>Sheet</th>
-            <th>Resource Type</th>
-            <th>Maturity Level</th>
-            <th>Verified By</th>
-            <th>Last Verified</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
+
+      <div class="filters">
+        <div class="filters__search">
+          <label class="sr-only" for="search">Search resources</label>
+          <input type="search" id="search" placeholder="Search name, URL or organization" autocomplete="off" />
+        </div>
+        <div class="filters__field">
+          <label for="filter-sheet">Sheet</label>
+          <select id="filter-sheet"><option value="">All sheets</option></select>
+        </div>
+        <div class="filters__field">
+          <label for="filter-type">Type</label>
+          <select id="filter-type"><option value="">All types</option></select>
+        </div>
+        <div class="filters__field">
+          <label for="filter-maturity">Maturity</label>
+          <select id="filter-maturity"><option value="">All maturity levels</option></select>
+        </div>
+        <label class="filters__toggle">
+          <input type="checkbox" id="filter-needs-verification" />
+          <span>Needs verification</span>
+        </label>
+        <button type="button" class="btn btn--ghost btn--sm" id="filters-reset">Reset</button>
+      </div>
+
+      <div class="verify-bar" id="verify-bar" hidden></div>
+
+      <div id="table-region" class="table-region" aria-live="polite"></div>
     </section>
 
-    <aside id="drawer"></aside>
+    <aside class="side">
+      <section class="panel" aria-labelledby="staged-heading">
+        <div class="panel__head">
+          <h2 id="staged-heading">Staged edits</h2>
+          <span class="panel__meta badge" id="staged-count"></span>
+        </div>
+        <div id="staged-region" aria-live="polite"></div>
+      </section>
 
-    <section id="working-set-section">
-      <h2>Working set</h2>
-      <div id="working-set"></div>
-    </section>
-
-    <section id="approvals-section">
-      <h2>Pending approvals</h2>
-      <div id="approvals"></div>
-    </section>
+      <section class="panel" aria-labelledby="approvals-heading">
+        <div class="panel__head">
+          <h2 id="approvals-heading">Pending review</h2>
+          <span class="panel__meta badge" id="approvals-count"></span>
+        </div>
+        <div id="approvals-region" aria-live="polite"></div>
+      </section>
+    </aside>
   </main>
+
+  <div class="overlay" id="overlay" hidden></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true" hidden></aside>
+
+  <dialog class="dialog" id="signin-dialog" aria-labelledby="signin-title">
+    <form id="signin-form" method="dialog">
+      <h2 id="signin-title">Sign in to edit</h2>
+      <p class="dialog__hint">
+        Paste a fine-grained personal access token scoped to this repository with
+        <strong>Contents</strong>, <strong>Pull requests</strong> and <strong>Actions</strong>
+        set to read and write. The token is kept in this tab only and cleared when you close it.
+      </p>
+      <label class="field__label" for="pat-input">Personal access token</label>
+      <input type="password" id="pat-input" autocomplete="off" placeholder="github_pat_…" />
+      <p class="field__error" id="pat-error" hidden></p>
+      <p class="dialog__hint"><a id="token-help" href="#" target="_blank" rel="noopener">Create a token on GitHub</a></p>
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--ghost" id="signin-cancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="pat-submit">Sign in</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
 
   <script type="module" src="app.js"></script>
 </body>
