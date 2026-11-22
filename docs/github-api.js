@@ -4,7 +4,7 @@ import { REPO_OWNER, REPO_NAME, RAW_BASE } from "./config.js";
 const API = "https://api.github.com";
 const TOKEN_KEY = "vt_radar_pat";
 
-export class ApiError extends Error {
+class ApiError extends Error {
   constructor(message, status, path) {
     super(message);
     this.name = "ApiError";
@@ -13,7 +13,7 @@ export class ApiError extends Error {
   }
 }
 
-export function getToken() {
+function getToken() {
   return sessionStorage.getItem(TOKEN_KEY) || "";
 }
 

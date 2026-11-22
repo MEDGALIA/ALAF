@@ -10,7 +10,14 @@ import {
   TOKEN_HELP_URL,
 } from "./config.js";
 import * as gh from "./github-api.js";
-import { loadDictionary, groupedEditableFields, autoManagedFields, isMultiLine } from "./schema.js";
+import {
+  loadDictionary,
+  groupedEditableFields,
+  autoManagedFields,
+  isMultiLine,
+  termList,
+  sameValue,
+} from "./schema.js";
 import {
   $,
   $$,
@@ -37,6 +44,10 @@ const state = {
 };
 
 const rowKey = (sheetName, id) => `${sheetName}::${id}`;
+
+// Arrays render as "a, b" rather than JavaScript's comma-joined default.
+const displayValue = (value) =>
+  Array.isArray(value) ? value.join(", ") || "(none)" : value || "(none)";
 
 // ---- Verification status ---------------------------------------------------
 
@@ -292,7 +303,7 @@ function renderRow({ sheetName, record }, showVerify) {
 
 function showDrawer(sheetName, record) {
   const key = rowKey(sheetName, record.id);
-  const current = state.staged.get(key) ?? record;
+  const current = state.staged.get(key)?.record ?? record;
   const groups = groupedEditableFields(state.dictionary, sheetName);
   const auto = autoManagedFields(state.dictionary, sheetName);
   const drawer = $("#drawer");
@@ -338,52 +349,53 @@ function showDrawer(sheetName, record) {
 
 function renderField(field, value) {
   const id = `f-${field.key}`;
-  const label = `<label class="field__label" for="${id}">${escapeHtml(field.name)}</label>`;
   const hint = field.description
     ? `<p class="field__hint" id="${id}-hint">${escapeHtml(field.description)}</p>`
     : "";
   const describedBy = field.description ? ` aria-describedby="${id}-hint"` : "";
 
-  let control;
+  // A checkbox group is labelled by a <span>, not a <label for>, which can only
+  // point at a single control.
   if (field.value_type === "controlled_multi") {
-    const sep = field.separator || ";";
-    const selected = new Set(String(value || "").split(sep).map((s) => s.trim()).filter(Boolean));
-    control = `<div class="chips" role="group" aria-labelledby="${id}-label" data-key="${field.key}" data-separator="${escapeHtml(sep)}">
-      ${field.terms
-        .map(
-          (t, i) => `<label class="chip">
-            <input type="checkbox" value="${escapeHtml(t.name)}" ${selected.has(t.name) ? "checked" : ""} id="${id}-${i}" />
-            <span>${escapeHtml(t.name)}</span>
-          </label>`
-        )
-        .join("")}
+    const selected = new Set(termList(value, field.separator || ";"));
+    // Selected terms first, so what is set is visible without scrolling the
+    // list. Ordered once at render, not on toggle, to avoid chips jumping.
+    const chips = [...field.terms]
+      .sort((a, b) => Number(selected.has(b.name)) - Number(selected.has(a.name)))
+      .map(
+        (t, i) => `<label class="chip">
+          <input type="checkbox" id="${id}-${i}" value="${escapeHtml(t.name)}" ${selected.has(t.name) ? "checked" : ""} />
+          <span>${escapeHtml(t.name)}</span>
+        </label>`
+      )
+      .join("");
+    return `<div class="field">
+      <span class="field__label" id="${id}-label">${escapeHtml(field.name)}</span>${hint}
+      <div class="chips" role="group" aria-labelledby="${id}-label" data-key="${escapeHtml(field.key)}">${chips}</div>
     </div>`;
-    return `<div class="field"><span class="field__label" id="${id}-label">${escapeHtml(field.name)}</span>${hint}${control}</div>`;
   }
+
+  let control;
   if (field.value_type === "controlled_single") {
-    control = `<select id="${id}" data-key="${field.key}"${describedBy}>
-      <option value="">(none)</option>
-      ${field.terms
-        .map((t) => `<option value="${escapeHtml(t.name)}" ${t.name === value ? "selected" : ""}>${escapeHtml(t.name)}</option>`)
-        .join("")}
-    </select>`;
+    const options = field.terms
+      .map((t) => `<option value="${escapeHtml(t.name)}" ${t.name === value ? "selected" : ""}>${escapeHtml(t.name)}</option>`)
+      .join("");
+    control = `<select id="${id}" data-key="${escapeHtml(field.key)}"${describedBy}><option value="">(none)</option>${options}</select>`;
   } else if (field.value_type === "date") {
-    control = `<input type="date" id="${id}" data-key="${field.key}" value="${escapeHtml(value || "")}"${describedBy} />`;
+    control = `<input type="date" id="${id}" data-key="${escapeHtml(field.key)}" value="${escapeHtml(value || "")}"${describedBy} />`;
   } else if (isMultiLine(field)) {
-    control = `<textarea id="${id}" data-key="${field.key}" rows="4"${describedBy}>${escapeHtml(value || "")}</textarea>`;
+    control = `<textarea id="${id}" data-key="${escapeHtml(field.key)}" rows="4"${describedBy}>${escapeHtml(value || "")}</textarea>`;
   } else {
     const type = field.key === "url" ? "url" : "text";
-    control = `<input type="${type}" id="${id}" data-key="${field.key}" value="${escapeHtml(value || "")}"${describedBy} />`;
+    control = `<input type="${type}" id="${id}" data-key="${escapeHtml(field.key)}" value="${escapeHtml(value || "")}"${describedBy} />`;
   }
-  return `<div class="field">${label}${hint}${control}</div>`;
+  return `<div class="field"><label class="field__label" for="${id}">${escapeHtml(field.name)}</label>${hint}${control}</div>`;
 }
 
 function readField(form, field) {
   if (field.value_type === "controlled_multi") {
     const group = form.querySelector(`.chips[data-key="${field.key}"]`);
-    return $$('input[type="checkbox"]:checked', group)
-      .map((c) => c.value)
-      .join(field.separator || ";");
+    return $$('input[type="checkbox"]:checked', group).map((c) => c.value);
   }
   return form.querySelector(`[data-key="${field.key}"]`)?.value ?? "";
 }
@@ -394,7 +406,7 @@ function stageEdit(sheetName, record) {
   for (const group of groupedEditableFields(state.dictionary, sheetName)) {
     for (const field of group.fields) updated[field.key] = readField(form, field);
   }
-  const changed = Object.keys(updated).some((k) => updated[k] !== record[k]);
+  const changed = Object.keys(updated).some((k) => !sameValue(updated[k], record[k]));
   if (!changed) {
     toast("No changes to stage.", { type: "info" });
     closeDrawer();
@@ -612,14 +624,16 @@ async function renderDiff(container, pr, dataFiles) {
           blocks.push(`<p class="diff-row"><strong>${escapeHtml(row.resource_name)}</strong> <span class="pill pill--new">new</span></p>`);
           continue;
         }
-        const changed = Object.keys(row).filter((k) => k !== "_content_hash" && row[k] !== prev[k]);
+        const changed = Object.keys(row).filter(
+          (k) => k !== "_content_hash" && !sameValue(row[k], prev[k])
+        );
         if (!changed.length) continue;
         blocks.push(`<div class="diff-row">
           <strong>${escapeHtml(row.resource_name)}</strong>
           <ul>${changed
             .map(
               (k) => `<li><code>${escapeHtml(k)}</code>
-                <del>${escapeHtml(prev[k] || "(none)")}</del> <ins>${escapeHtml(row[k] || "(none)")}</ins></li>`
+                <del>${escapeHtml(displayValue(prev[k]))}</del> <ins>${escapeHtml(displayValue(row[k]))}</ins></li>`
             )
             .join("")}</ul>
         </div>`);

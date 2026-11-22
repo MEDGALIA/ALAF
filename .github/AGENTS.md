@@ -16,7 +16,7 @@ Example: when generating html, write a script once for that task. After that alw
 Do not rewrite the html file manually.
 If the script fails, report the failure and only then go and fix the script.
 
-## 2. Token Economy: Communication style
+## 2. Communication style: Brevity is preferred (Token Economy)
 
 Remind the user to set in the chatbox: `/config verbose=false`
 
