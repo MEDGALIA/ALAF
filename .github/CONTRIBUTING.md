@@ -1,57 +1,70 @@
 # Contributing to ALAF
 
-Thanks for your interest in contributing to the Agentic Landscape Assessment
-Framework. This project is early-stage and welcomes issues, discussion, and
-pull requests from the research data community.
+ALAF, the Agentic Landscape Assessment Framework, is the technical home of the RDA Working Group [VANTAGE](https://www.rd-alliance.org/groups/visiting-agent-network-trusted-access-governance-evaluation-vantage-wg/activity/), which is formed, endorsed and active. The VT Radar knowledge base it maintains is reviewed, and every change carries a named reviewer.
 
-By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
+By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Ways to contribute
+## Open source, moderated contribution
 
-- **Report a bug or gap**: open a [GitHub issue](https://github.com/MEDGALIA/ALAF/issues)
-  describing what's wrong or missing. For the VT Radar knowledge base, include
-  which row/term is affected and why.
-- **Propose a knowledge base change**: see [Updating the VT Radar knowledge base](#updating-the-vt-radar-knowledge-base)
-  below.
-- **Improve tooling or docs**: see [Development setup](#development-setup).
-- **Discuss framework direction**: since the RDA Working Group has not yet
-  been formed, larger design questions are best raised as an issue first,
-  before investing time in a PR.
+**The licenses are open.** Code is [BSD 3-Clause](../LICENSE) and the VT Radar data is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Anyone may fork, modify, redistribute and build on either, including commercially, with attribution. Running your own VT Radar from a fork is a supported use.
+
+**Contribution to this repository is moderated.** Write access is granted to VANTAGE Working Group collaborators. Everyone else contributes through issues, or by forking. An open license does not carry an open commit bit.
+
+## Who can do what
+
+| You are | You can | How |
+|---|---|---|
+| Anyone | Report an error, suggest a resource, report a bug, discuss direction | [Open an issue](https://github.com/MEDGALIA/ALAF/issues/new/choose) |
+| Anyone | Reuse or build on ALAF independently | Fork, under BSD 3-Clause and CC BY 4.0 |
+| Anyone | Propose a code or documentation change | Pull request from a fork, see [Code and documentation changes](#code-and-documentation-changes) |
+| Collaborator with write access | Edit the VT Radar in the curator UI and open a pull request | [Curator UI](https://medgalia.github.io/ALAF/), see [`user_guides/VT_RADAR.md`](../user_guides/VT_RADAR.md) |
+| Code owner | Approve and merge changes to the VT Radar | Pull request review, see [CODEOWNERS](CODEOWNERS) |
+| Admin | Branch protection, collaborator access, workflow secrets | Repository settings |
+
+Write access and review authority are separate. Write access lets you edit and propose. Only an approval from an account listed in [CODEOWNERS](CODEOWNERS) satisfies the review requirement on `data/json/**` and the workbook.
+
+**Becoming a collaborator:** join the [VANTAGE Working Group](https://www.rd-alliance.org/groups/visiting-agent-network-trusted-access-governance-evaluation-vantage-wg/activity/), then ask a maintainer. There is no separate onboarding step.
+
+## Report or suggest something
+
+Issues are open to everyone and are the main route into the project. Pick the matching template when you [open one](https://github.com/MEDGALIA/ALAF/issues/new/choose):
+
+| Template | Use it for |
+|---|---|
+| Suggest a resource | A new VT Radar entry |
+| Report a data error | A wrong or outdated field on an existing row |
+| Report a bug | Scripts, workflows, or the curator UI |
+| Discuss framework direction | ALAF scope, checklist, or methodology |
+
+Report a suspected vulnerability privately through [SECURITY.md](SECURITY.md), not as an issue.
+
+## Proposing a VT Radar data change
+
+Only collaborators can change the VT Radar directly, because every data change must stay inside the reviewed pipeline that stamps `Verified By`.
+
+**From outside the Working Group:** open a *Suggest a resource* or *Report a data error* issue. The template asks for exactly the fields a curator needs, and a curator applies the change. Contributions from outside the Working Group are not credited in the row itself; join the Working Group and take a maintainer role to be named as an editor or reviewer.
+
+**As a collaborator:** use the [curator UI](https://medgalia.github.io/ALAF/), which stages your edits and opens a pull request for you. [`user_guides/VT_RADAR.md`](../user_guides/VT_RADAR.md) covers the full flow, including the xlsx upload route if you prefer working in Excel.
+
+Do not hand-edit files under `data/json/`, they are generated. Edit through the UI or the workbook.
+
+## Code and documentation changes
+
+Fork the repository, branch, and open a pull request. This works normally for anything under `src/`, `docs/`, `developer_guides/`, `user_guides/` and the workflows.
+
+Two things to expect:
+
+- **Your checks may pause.** GitHub holds Actions runs from first-time contributors until a maintainer releases them.
+- **Data files are the exception.** A pull request from a fork gets no automatic xlsx and JSON sync, because `GITHUB_TOKEN` cannot write to a fork's branch. Send VT Radar data changes as an issue instead, as above.
+
+There is no CLA or DCO. Contributions are taken under the same license as the files you change.
 
 ## Ground rules
 
 - Every change goes through a pull request, no direct pushes to `main`.
-- Keep PRs focused; unrelated changes make review harder and slow everyone down.
-- Write commit messages that explain *why*, not just *what*.
-- Don't introduce secrets, credentials, or personal data into the repository.
-- Sign off on the [Code of Conduct](CODE_OF_CONDUCT.md): be respectful and
-  assume good faith.
-
-## Updating the VT Radar knowledge base
-
-The knowledge base lives in [`data/VANTAGE-Technology-Radar.xlsx`](data/VANTAGE-Technology-Radar.xlsx)
-and is mirrored to `data/json/` for machine consumption. This repo uses a
-GitOps workflow, described in full in
-[`developer_guides/backend-implementation-plan.md`](developer_guides/backend-implementation-plan.md):
-
-1. Edit the xlsx directly (add/update rows, or controlled-vocabulary terms in
-   the `Vocabulary` tab).
-2. Run the sync script to regenerate `data/json/`:
-   ```powershell
-   .\.venv\Scripts\python src\scripts\xlsx_to_json.py
-   ```
-   Use `--fresh` only after a schema (column) change, see
-   [`developer_guides/scripts-guide.md`](developer_guides/scripts-guide.md) for why.
-3. Optionally regenerate the coverage report to sanity-check your change:
-   ```powershell
-   .\.venv\Scripts\python src\scripts\tech_radar_analysis.py
-   ```
-4. Commit both the xlsx and the regenerated `data/json/` files together, and
-   open a pull request. Changes under `data/json/**` require review from a
-   curator (see [`.github/CODEOWNERS`](.github/CODEOWNERS)) before merging.
-
-Do not hand-edit files under `data/json/`, they're generated. Edit the xlsx
-and re-run the sync script instead.
+- Keep pull requests scoped to one concern.
+- Do not commit secrets, credentials, or personal data.
+- Update the guide in `developer_guides/` when you change a script's behavior.
 
 ## Development setup
 
@@ -60,20 +73,11 @@ python -m venv .venv
 .\.venv\Scripts\pip install -r src\scripts\requirements.txt
 ```
 
-See [`developer_guides/scripts-guide.md`](developer_guides/scripts-guide.md)
-for what each script in `src/scripts/` does and how to run it.
+[`developer_guides/scripts-guide.md`](../developer_guides/scripts-guide.md) covers what each script does and how to run it. [`developer_guides/backend-implementation-plan.md`](../developer_guides/backend-implementation-plan.md) and [`developer_guides/frontend-implementation-plan.md`](../developer_guides/frontend-implementation-plan.md) cover the design.
 
 ## Pull request checklist
 
-- [ ] Change is scoped to one concern
-- [ ] If you touched the xlsx: `data/json/` was regenerated and committed alongside it
-- [ ] If you touched a script's behavior: `developer_guides/` docs updated to match
-- [ ] No unrelated formatting/whitespace churn
-
-## License
-
-ALAF software is licensed under the [BSD 3-Clause License](LICENSE). The
-VT Radar knowledge base and other datasets are licensed under
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). By contributing,
-you agree that your contributions will be licensed under the same terms as
-the files you're modifying.
+- [ ] Scoped to one concern
+- [ ] Docs in `developer_guides/` updated if a script's behavior changed
+- [ ] No unrelated formatting or whitespace churn
+- [ ] No secrets, credentials, or personal data

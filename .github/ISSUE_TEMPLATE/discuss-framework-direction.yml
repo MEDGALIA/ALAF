@@ -1,0 +1,32 @@
+name: Discuss framework direction
+description: ALAF scope, the readiness checklist, or methodology
+title: "[Discussion] "
+labels: ["discussion", "vantage-wg"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For design questions the [VANTAGE Working Group](https://www.rd-alliance.org/groups/visiting-agent-network-trusted-access-governance-evaluation-vantage-wg/activity/) should weigh in on. Raise it here before investing time in a pull request.
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - ALAF scope and boundaries
+        - Readiness checklist
+        - VT Radar schema or vocabulary
+        - Evaluation methodology
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What are you proposing, and why
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: What would change
+      description: Which documents, data, or tooling this would affect

@@ -1,0 +1,48 @@
+name: Report a data error
+description: A wrong or outdated field on an existing VT Radar row
+title: "[Data] "
+labels: ["vt-radar", "data-error"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Browse the radar in the [curator UI](https://medgalia.github.io/ALAF/) to find the exact resource name.
+  - type: input
+    id: resource
+    attributes:
+      label: Resource name
+      description: The row as it currently reads on the radar
+    validations:
+      required: true
+  - type: dropdown
+    id: sheet
+    attributes:
+      label: Sheet
+      options:
+        - Knowledgebase
+        - Deprecated
+        - SOTA Coding Agents Benchmarks
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: field
+    attributes:
+      label: Field
+      description: "Which column is wrong. Example: URL, Maturity Level, Topic Focus"
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Current value, and what it should be
+      value: |
+        Current:
+        Should be:
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: A link or quote supporting the correction

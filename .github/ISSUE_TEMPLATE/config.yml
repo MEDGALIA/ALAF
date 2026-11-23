@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: VANTAGE Working Group
+    url: https://www.rd-alliance.org/groups/visiting-agent-network-trusted-access-governance-evaluation-vantage-wg/activity/
+    about: Join the Working Group, or see its current activity.
+  - name: Report a security vulnerability
+    url: https://github.com/MEDGALIA/ALAF/security/advisories/new
+    about: Report privately through a security advisory, never as a public issue.
