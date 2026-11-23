@@ -8,7 +8,7 @@ This guide is for **contributors** updating the VANTAGE Technology Radar (VT Rad
 
 ## Step by step
 
-1. **Download and edit.** Get the current workbook from `data/VANTAGE-Technology-Radar.xlsx` in the repo, edit it in Excel (or another real spreadsheet app), save with name `VANTAGE-Technology-Radar.xlsx` or you will block the process. Respect the Vocabulary when editing.
+1. **Download and edit.** Get the current workbook from `data/VANTAGE-Technology-Radar.xlsx` in the repo, edit it in Excel (or another spreadsheet app), save with the name `VANTAGE-Technology-Radar.xlsx` or you will block the process. Respect the Vocabulary when editing.
 2. **Go to the `data/` folder on github.com.** Stay in the folder listing, "Upload files" is not available from inside the file itself, only from the folder view.
 3. **Upload your edited copy.** From the folder listing, "Add file" → "Upload files" (or drag your file directly onto the page), select your edited file with the **exact same name**, `VANTAGE-Technology-Radar.xlsx`, so it replaces the old one, or you will get an **error**.
 4.  **Click the "Propose Changes" button**. Accept the branch name provided. This will commit as a new branch and open a pull request (PR). You don't need to understand what a branch is, just follow the prompt.
@@ -25,7 +25,7 @@ You don't need to do anything special for these, they just happen when your file
 - **Every row has an `ID` column** (column A on each data tab) that you shouldn't touch. It's how the sync recognizes "this is the same row as before" even if you rename it, and it gets assigned automatically for any new row you add, just leave it blank and it'll be filled in for you.
 - **Moving a row between tabs** (e.g. a resource that's now deprecated): copy the *entire* row, including its `ID`, from `Knowledgebase` into `Deprecated`, then delete it from `Knowledgebase`. As long as the `ID` comes along, the sync recognizes it as a move, not a deletion, and its history is preserved.
 - **Deleting a row outright** (no move, it's just gone) blocks the PR until a repo admin approves it. If you're not sure whether something should be deleted or moved to `Deprecated`, ask first.
-- **Your file's structure is checked before anything else happens.** If a column got renamed, removed, or reordered by accident, the sync refuses to run at all rather than guessing, you'll need to fix the structure and re-upload. Stick to editing cell *values*, not column headers or their order, unless you're deliberately proposing a schema change (in which case, propose it in the Issues).
+- **Your file's structure is checked before anything else happens.** If a column got renamed, removed, or reordered, the sync refuses to run and you'll need to fix the structure and re-upload. Edit cell *values*, not column headers or their order. To propose a schema change, open an Issue.
 - **`Added/Edited By`** records who last touched a row. When you upload via GitHub it's set to your GitHub handle automatically on any row you actually changed.
 
 ## For the curator

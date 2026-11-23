@@ -32,7 +32,7 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 The knowledge base lives in [`data/VANTAGE-Technology-Radar.xlsx`](data/VANTAGE-Technology-Radar.xlsx)
 and is mirrored to `data/json/` for machine consumption. This repo uses a
 GitOps workflow, described in full in
-[`developer_guides/implementation-plan.md`](developer_guides/implementation-plan.md):
+[`developer_guides/backend-implementation-plan.md`](developer_guides/backend-implementation-plan.md):
 
 1. Edit the xlsx directly (add/update rows, or controlled-vocabulary terms in
    the `Vocabulary` tab).

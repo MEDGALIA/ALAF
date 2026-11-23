@@ -10,7 +10,7 @@ Containerization tasks: Before publishing a Docker image, the agent has confirme
 
 Test guides: Before handing the user a command to run (a test step, a CLI invocation), the agent has already run it (or the closest safe equivalent, e.g. `--help`) to confirm dependencies are installed and the command executes, not just that the code parses.
 
-## 1. Token Economy: reusing scripts
+## 1. Reuse scripts (Token Economy)
 Always save unnecessary tokens. If a script exists that can run a task where you spend zero tokens, then run the script.
 Example: when generating html, write a script once for that task. After that always run it to generate the html files.
 Do not rewrite the html file manually.
@@ -61,9 +61,8 @@ Every push of a docker release tag triggers a full multi-arch Docker build (~20�
 
 ## 8. Commenting style and guide editing
 
-Keep comments and developer guides concise. No mention of why decisions were made, but mention, if applicable, the Github issue number that is relevant by adding it in parenthesis.
+Keep comments and user or developer guides concise. A mention of why decisions was made has to be one sentence or shorter. Avoid AI-Slop. No em-dashes, instead use commas or reformulate. Mention, if applicable, the Github issue number that is relevant by adding it in parenthesis.
 E.g.: A developer following a guide to deploy a release doesn't need an incident report
-
 
 Example:
 ```
@@ -92,13 +91,10 @@ Feel free to fix my spelling in any planning document or .md file where you see 
 
 ## 11. Fix obvious errors without asking, don't ignore or work around them
 
-Example: You write a guide, or comment that says "command X does A"
+Example: You write a guide, or comment that says "command X does A",
+if then you find out that "command X does B but not A", then fix the guide.
 
-Then you find out that "command X does B but not A"
-
-You do not need to ask me about fixing what is wrong if it has no repercussions and you only recently wrote or coded it and it is not in production. Just fix it and inform me that you are fixing it because it is incorrect.
-
-Example: If a script is not used anywhere in production and it is only used manually and the script is obviously WRONG, then either fix it or create one that works and tell user that script is bad. It could be a legacy script leftover by some junior developer. Add such bugs to an issues .md file
+If you discover some code is wrong in a file you are editing  and it is an obvious bug that breaks the feature, and it is wrong, this is the time to fix it. Just fix it and inform me that you are fixing it because it is incorrect. Ask me about it only if you are unsure it is an error and you believe it could be a valid feature. 
 
 ## 12. Do not cut corners: Implement solution for a professional business application
 
@@ -139,6 +135,12 @@ Do not chain commands with &&, ||, or pipes, and do not use multi-line blocks or
 
 Do not refer to gitignored files in guides. If a file is in a gitgnored folder called "drafts" do not refer to it from a file that will be pushed to GitHub. 
 
-## 18. Keep public planning guides at a high level of abstraction
+Public facing planning guides in GitHub, do not need to mention minor features/tasks that were planned but then dropped. They should mention what was built,  at a high level of abstraction, with a short statement of the reason. They should mention what is planned but not build yet. 
 
-Public facing planning guides in GitHub, do not need to mention minor features/tasks that were planned but then dropped. They should mention what was built, and what is planned but not build yet, at a high level of abstraction. 
+## 18. Review Criteria After Code Changes
+Review the code changes before giving it to me using these criteria:
+- Correctness : avoid logic errors, edge cases, and type issues.
+- Code quality : ensure readability, naming, avoiding duplication, and removing and fixing code duplication where present.
+- Security : focus on input validation, avoid injection risks and data exposure.
+- Architecture : be perfect at codebase patterns, design consistency, structural alignment.
+- Parsimony in Coding: Be parsimonious when architecting code and writing code. Use the smallest, simplest, least‑complex solution that fully solves the problem; no extra layers, no unnecessary abstractions, no over‑engineering.

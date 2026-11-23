@@ -40,6 +40,7 @@ const state = {
   sheets: {},
   staged: new Map(), // "sheet::id" -> record
   summaries: new Map(), // row id -> summary filename
+  stagedSummaries: new Map(), // row id -> pending summary file
   selected: new Set(), // "sheet::id" for verification
   user: null,
   canWrite: false,
@@ -50,6 +51,34 @@ const state = {
 };
 
 const rowKey = (sheetName, id) => `${sheetName}::${id}`;
+
+const hasSummary = (id) => state.summaries.has(id) || state.stagedSummaries.has(id);
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+// Matches drafts/Summaries.md: id first, then the name with every character
+// outside A-Za-z0-9_ replaced by an underscore.
+const summaryFilename = (record) =>
+  `${record.id}_${String(record.resource_name || "").replace(/[^A-Za-z0-9_]/g, "_")}.md`;
+
+function summaryFileText(entry) {
+  const { record, body, summarizedBy, summarizedDate } = entry;
+  // reviewed_by stays empty: the approving reviewer is stamped on merge by
+  // stamp-verification.yml, the same rule rows already follow. (#36)
+  return [
+    "---",
+    `id: ${record.id}`,
+    `resource_name: ${record.resource_name || ""}`,
+    `url: ${record.url || ""}`,
+    `summarized_date: ${summarizedDate}`,
+    `summarized_by: ${summarizedBy}`,
+    "reviewed_by:",
+    "---",
+    "",
+    body,
+    "",
+  ].join("\n");
+}
 
 // Arrays render as "a, b" rather than JavaScript's comma-joined default.
 const displayValue = (value) =>
@@ -82,6 +111,7 @@ function signOut() {
   state.canWrite = false;
   state.selected.clear();
   state.staged.clear();
+  state.stagedSummaries.clear();
   document.body.classList.remove("can-write");
   renderAuth();
   renderTable();
@@ -184,14 +214,14 @@ function allRows() {
 }
 
 function visibleRows() {
-  const { search, sheet, type, maturity, needsVerification, hasSummary } = state.filters;
+  const { search, sheet, type, maturity, needsVerification, hasSummary: summaryOnly } = state.filters;
   const needle = search.trim().toLowerCase();
   let rows = allRows().filter(({ sheetName, record }) => {
     if (sheet && sheetName !== sheet) return false;
     if (type && record.resource_type !== type) return false;
     if (maturity && record.maturity_level !== maturity) return false;
     if (needsVerification && verificationStatus(record).level === "verified") return false;
-    if (hasSummary && !state.summaries.has(record.id)) return false;
+    if (summaryOnly && !hasSummary(record.id)) return false;
     if (!needle) return true;
     return `${record.resource_name ?? ""} ${record.url ?? ""} ${record.source_organization ?? ""}`
       .toLowerCase()
@@ -282,6 +312,13 @@ function renderTable() {
       if (record) showDrawer(sheetName, record);
     })
   );
+  $$("[data-summary]", host).forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const [sheetName, id] = btn.dataset.summary.split("::");
+      const record = state.sheets[sheetName].records.find((r) => r.id === id);
+      if (record) showDrawer(sheetName, record, { expandSummary: true });
+    })
+  );
   $$(".row-check", host).forEach((box) =>
     box.addEventListener("change", () => {
       if (box.checked) state.selected.add(box.dataset.key);
@@ -319,7 +356,14 @@ function renderRow({ sheetName, record }, showVerify) {
         // Only when viewing every sheet at once, since the column is gone.
         state.filters.sheet ? "" : `<span class="badge">${escapeHtml(SHEET_LABELS[sheetName] || sheetName)}</span>`
       }
-      ${state.summaries.has(record.id) ? `<span class="badge badge--summary" title="A summary is available">Summary</span>` : ""}
+      ${
+        hasSummary(record.id)
+          ? `<button type="button" class="badge badge--summary" data-summary="${escapeHtml(key)}"
+               aria-label="Open summary for ${escapeHtml(record.resource_name || record.id)}">Summary${
+                 state.stagedSummaries.has(record.id) ? " (staged)" : ""
+               }</button>`
+          : ""
+      }
     </td>
     <td>${escapeHtml(record.source_organization || "")}</td>
     <td>${escapeHtml(record.resource_type || "")}</td>
@@ -333,7 +377,7 @@ function renderRow({ sheetName, record }, showVerify) {
 
 // ---- Drawer ----------------------------------------------------------------
 
-function showDrawer(sheetName, record) {
+function showDrawer(sheetName, record, { expandSummary = false } = {}) {
   const key = rowKey(sheetName, record.id);
   const current = state.staged.get(key)?.record ?? record;
   const groups = groupedEditableFields(state.dictionary, sheetName);
@@ -352,7 +396,7 @@ function showDrawer(sheetName, record) {
       <button type="button" class="btn btn--ghost" id="drawer-close" aria-label="Close editor">×</button>
     </header>
     <div class="drawer__body">
-    ${summarySection(record.id)}
+    ${summarySection(record, expandSummary)}
     <form id="drawer-form">
       ${groups
         .map(
@@ -386,7 +430,7 @@ function showDrawer(sheetName, record) {
     </footer>`;
 
   openDrawer();
-  wireSummary(record.id);
+  wireSummary(record, sheetName, expandSummary);
   $("#drawer-close").addEventListener("click", closeDrawer);
   $("#drawer-cancel").addEventListener("click", closeDrawer);
   if (readOnly) {
@@ -400,48 +444,157 @@ function showDrawer(sheetName, record) {
 }
 
 // Reference material while verifying a row, so it sits above the form but
-// stays collapsed: the body runs to a page or two. (#36)
-function summarySection(rowId) {
-  const file = state.summaries.get(rowId);
-  if (!file) return "";
-  return `<details class="summary" id="summary-block">
+// stays collapsed: the body runs to a page or two. Signed-in curators can
+// write one where none exists, or edit the existing text. (#36)
+function summarySection(record, expanded) {
+  const file = state.summaries.get(record.id);
+  const staged = state.stagedSummaries.get(record.id);
+
+  if (!file && !staged) {
+    if (!state.canWrite) return "";
+    return `<div class="summary summary--empty" id="summary-block">
+      <p class="summary__none">No summary yet.</p>
+      <button type="button" class="btn btn--secondary btn--sm" id="summary-write">Write summary</button>
+    </div>`;
+  }
+
+  return `<details class="summary" id="summary-block" ${expanded || staged ? "open" : ""}>
     <summary class="summary__toggle">
       <span class="summary__label">Summary</span>
+      ${staged ? `<span class="badge badge--staged">Staged</span>` : ""}
       <span class="summary__meta" id="summary-meta"></span>
     </summary>
     <div class="summary__body" id="summary-body"></div>
   </details>`;
 }
 
-function wireSummary(rowId) {
-  const file = state.summaries.get(rowId);
-  if (!file) return;
+function wireSummary(record, sheetName, expanded) {
+  const file = state.summaries.get(record.id);
+  const staged = state.stagedSummaries.get(record.id);
+
+  if (!file && !staged) {
+    $("#summary-write")?.addEventListener("click", () => openSummaryEditor(record, sheetName, ""));
+    return;
+  }
+
   const block = $("#summary-block");
   let loaded = false;
-  block.addEventListener("toggle", async () => {
-    if (!block.open || loaded) return;
+
+  const load = async () => {
+    if (loaded) return;
     loaded = true;
     const body = $("#summary-body");
+    if (staged) {
+      showSummaryView(record, sheetName, staged.body, {
+        summarized_by: staged.summarizedBy,
+        summarized_date: staged.summarizedDate,
+      });
+      return;
+    }
     renderLoading(body, "Loading summary…");
     try {
       const text = await gh.fetchRawText(`${SUMMARIES_DIR}/${file}`, DEFAULT_BRANCH);
       const { meta, body: markdown } = parseFrontMatter(text);
-      const by = [
-        meta.summarized_by ? `Summarized by ${meta.summarized_by}` : "",
-        meta.reviewed_by ? `reviewed by ${meta.reviewed_by}` : "",
-        meta.summarized_date || "",
-      ].filter(Boolean);
-      $("#summary-meta").textContent = by.join(" · ");
-      body.innerHTML = `${renderMarkdown(markdown)}
-        <p class="summary__source">
-          <a href="${gh.repoUrl()}/blob/${DEFAULT_BRANCH}/${SUMMARIES_DIR}/${encodeURIComponent(file)}"
-             target="_blank" rel="noopener">View the summary file on GitHub</a>
-        </p>`;
+      showSummaryView(record, sheetName, markdown, meta);
     } catch (err) {
       loaded = false;
       renderError(body, err.message);
     }
+  };
+
+  block.addEventListener("toggle", () => {
+    if (block.open) load();
   });
+  if (expanded || staged) load();
+}
+
+function summaryByline(meta) {
+  return [
+    meta.summarized_by ? `Summarized by ${meta.summarized_by}` : "",
+    meta.reviewed_by ? `reviewed by ${meta.reviewed_by}` : "",
+    meta.summarized_date || "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function showSummaryView(record, sheetName, markdown, meta) {
+  const file = state.summaries.get(record.id);
+  $("#summary-meta").textContent = summaryByline(meta);
+  $("#summary-body").innerHTML = `
+    ${renderMarkdown(markdown)}
+    <p class="summary__source">
+      ${
+        file
+          ? `<a href="${gh.repoUrl()}/blob/${DEFAULT_BRANCH}/${SUMMARIES_DIR}/${encodeURIComponent(file)}"
+               target="_blank" rel="noopener">View the summary file on GitHub</a>`
+          : ""
+      }
+    </p>
+    ${state.canWrite ? `<button type="button" class="btn btn--secondary btn--sm" id="summary-edit">Edit summary</button>` : ""}`;
+  $("#summary-edit")?.addEventListener("click", () => openSummaryEditor(record, sheetName, markdown));
+}
+
+// Write and Preview as tabs rather than a split pane: the drawer is ~520px,
+// which is too narrow to halve. Preview uses the viewer's own renderer.
+function openSummaryEditor(record, sheetName, markdown) {
+  const block = $("#summary-block");
+  if (block.tagName === "DETAILS") block.open = true;
+
+  const host = block.tagName === "DETAILS" ? $("#summary-body") : block;
+  host.innerHTML = `
+    <div class="editor">
+      <div class="editor__tabs" role="tablist">
+        <button type="button" class="editor__tab is-active" role="tab" aria-selected="true" data-tab="write">Write</button>
+        <button type="button" class="editor__tab" role="tab" aria-selected="false" data-tab="preview">Preview</button>
+      </div>
+      <textarea id="summary-text" class="editor__text" rows="16"
+        aria-label="Summary Markdown">${escapeHtml(markdown)}</textarea>
+      <div id="summary-preview" class="editor__preview" hidden></div>
+      <p class="field__hint">Saved as summarized_by ${escapeHtml(state.user?.login ? "@" + state.user.login : "you")}, ${todayIso()}. Front matter is written for you.</p>
+      <div class="editor__actions">
+        <button type="button" class="btn btn--ghost btn--sm" id="summary-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary btn--sm" id="summary-stage">Stage summary</button>
+      </div>
+    </div>`;
+
+  const text = $("#summary-text");
+  const preview = $("#summary-preview");
+  $$(".editor__tab", host).forEach((tab) =>
+    tab.addEventListener("click", () => {
+      const showPreview = tab.dataset.tab === "preview";
+      $$(".editor__tab", host).forEach((t) => {
+        const active = t === tab;
+        t.classList.toggle("is-active", active);
+        t.setAttribute("aria-selected", String(active));
+      });
+      if (showPreview) preview.innerHTML = renderMarkdown(text.value);
+      preview.hidden = !showPreview;
+      text.hidden = showPreview;
+    })
+  );
+
+  $("#summary-cancel").addEventListener("click", () => showDrawer(sheetName, record, { expandSummary: true }));
+  $("#summary-stage").addEventListener("click", () => stageSummary(record, sheetName, text.value));
+}
+
+function stageSummary(record, sheetName, body) {
+  if (!body.trim()) {
+    toast("Summary is empty, nothing to stage.", { type: "error" });
+    return;
+  }
+  state.stagedSummaries.set(record.id, {
+    sheetName,
+    record,
+    filename: state.summaries.get(record.id) || summaryFilename(record),
+    body: body.trim(),
+    summarizedBy: `@${state.user.login}`,
+    summarizedDate: todayIso(),
+  });
+  renderStaged();
+  renderTable();
+  closeDrawer();
+  toast(`Summary staged for "${record.resource_name}".`, { type: "success" });
 }
 
 function renderField(field, value) {
@@ -520,7 +673,7 @@ function stageEdit(sheetName, record) {
 
 function renderStaged() {
   const host = $("#staged-region");
-  const count = state.staged.size;
+  const count = state.staged.size + state.stagedSummaries.size;
   $("#staged-count").textContent = count ? String(count) : "";
   if (count === 0) {
     renderEmpty(host, {
@@ -529,21 +682,32 @@ function renderStaged() {
     });
     return;
   }
+  const rowItems = [...state.staged.entries()].map(
+    ([key, { record }]) => `<li>
+      <span>${escapeHtml(record.resource_name)}</span>
+      <button type="button" class="btn btn--ghost btn--sm" data-unstage="${escapeHtml(key)}" aria-label="Remove ${escapeHtml(record.resource_name)} from staged edits">Remove</button>
+    </li>`
+  );
+  const summaryItems = [...state.stagedSummaries.entries()].map(
+    ([id, { record }]) => `<li>
+      <span><span class="staged-kind">Summary</span> ${escapeHtml(record.resource_name)}</span>
+      <button type="button" class="btn btn--ghost btn--sm" data-unstage-summary="${escapeHtml(id)}" aria-label="Remove the staged summary for ${escapeHtml(record.resource_name)}">Remove</button>
+    </li>`
+  );
+
   host.innerHTML = `
-    <ul class="staged-list">
-      ${[...state.staged.entries()]
-        .map(
-          ([key, { record }]) => `<li>
-            <span>${escapeHtml(record.resource_name)}</span>
-            <button type="button" class="btn btn--ghost btn--sm" data-unstage="${escapeHtml(key)}" aria-label="Remove ${escapeHtml(record.resource_name)} from staged edits">Remove</button>
-          </li>`
-        )
-        .join("")}
-    </ul>
+    <ul class="staged-list">${[...rowItems, ...summaryItems].join("")}</ul>
     <button type="button" class="btn btn--primary" id="submit-staged">Open pull request (${count})</button>`;
   $$("[data-unstage]", host).forEach((btn) =>
     btn.addEventListener("click", () => {
       state.staged.delete(btn.dataset.unstage);
+      renderStaged();
+      renderTable();
+    })
+  );
+  $$("[data-unstage-summary]", host).forEach((btn) =>
+    btn.addEventListener("click", () => {
+      state.stagedSummaries.delete(btn.dataset.unstageSummary);
       renderStaged();
       renderTable();
     })
@@ -554,6 +718,8 @@ function renderStaged() {
 async function submitStaged(button) {
   await withBusy(button, "Opening pull request…", async () => {
     try {
+      const rowCount = state.staged.size;
+      const summaryCount = state.stagedSummaries.size;
       const branch = `ui-edit-${Date.now()}`;
       await gh.createBranch(branch, DEFAULT_BRANCH);
 
@@ -579,14 +745,35 @@ async function submitStaged(button) {
         });
       }
 
+      for (const entry of state.stagedSummaries.values()) {
+        const path = `${SUMMARIES_DIR}/${entry.filename}`;
+        // An existing file needs its blob sha; a new one must not send one.
+        let sha;
+        try {
+          ({ sha } = await gh.getFileWithSha(path, DEFAULT_BRANCH));
+        } catch {
+          sha = undefined;
+        }
+        await gh.putFile({
+          path,
+          content: summaryFileText(entry),
+          message: `${sha ? "Update" : "Add"} summary for ${entry.record.resource_name}`,
+          branch,
+          sha,
+        });
+      }
+
       const pr = await gh.createPullRequest({
-        title: `UI edit: ${state.staged.size} row(s)`,
+        title: summaryCount
+          ? `UI edit: ${rowCount} row(s), ${summaryCount} summary file(s)`
+          : `UI edit: ${rowCount} row(s)`,
         head: branch,
         base: DEFAULT_BRANCH,
         body: "Opened from the VT Radar curator UI.",
       });
 
       state.staged.clear();
+      state.stagedSummaries.clear();
       renderStaged();
       renderTable();
       toast(`Pull request #${pr.number} opened.`, {

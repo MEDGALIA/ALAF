@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -121,6 +122,29 @@ def apply_xlsx_stamps(xlsx_path: Path, row_ids: set[str], approver: str, approve
     wb.save(xlsx_path)
 
 
+def stamp_summaries(head_dir: Path, base_dir: Path, reviewer: str) -> list[str]:
+    """Fill a blank `reviewed_by` on summary files this PR changed.
+
+    Same rule the rows follow: only files touched by the PR, and only where
+    the field is still blank, so a hand-entered reviewer is never overwritten.
+    """
+    if not head_dir.is_dir():
+        return []
+    stamped = []
+    for path in sorted(head_dir.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        base_path = base_dir / path.name
+        if base_path.exists() and base_path.read_text(encoding="utf-8") == text:
+            continue
+        updated, count = re.subn(
+            r"(?m)^reviewed_by:[^\S\r\n]*$", f"reviewed_by: {reviewer}", text, count=1
+        )
+        if count:
+            path.write_text(updated, encoding="utf-8", newline="\n")
+            stamped.append(path.name)
+    return stamped
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-dir", type=Path, required=True)
@@ -128,6 +152,8 @@ def main() -> None:
     parser.add_argument("--xlsx", type=Path, required=True)
     parser.add_argument("--repo", required=True, help="owner/repo")
     parser.add_argument("--pr-number", type=int, required=True)
+    parser.add_argument("--summaries-dir", type=Path, help="data/summaries inside the main checkout")
+    parser.add_argument("--base-summaries-dir", type=Path, help="data/summaries in the base worktree")
     args = parser.parse_args()
 
     approval = approving_review(args.repo, args.pr_number)
@@ -136,6 +162,11 @@ def main() -> None:
         return
     handle, approved_date = approval
     approver = f"@{handle}"
+
+    if args.summaries_dir and args.base_summaries_dir:
+        summaries = stamp_summaries(args.summaries_dir, args.base_summaries_dir, approver)
+        if summaries:
+            print(f"Stamped reviewed_by={approver} on {len(summaries)} summary file(s): {summaries}")
 
     changed_ids = find_changed_row_ids(args.base_dir, args.write_dir)
     if not changed_ids:

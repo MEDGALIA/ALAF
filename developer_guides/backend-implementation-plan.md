@@ -1,11 +1,22 @@
-# Implementation Plan
+# Backend Implementation Plan
 
-The implementation plan has four steps so far:
+The backend implementation plan has four steps so far:
 
 1. VT Radar xlsx ⇄ JSON Two-Way Sync (Status: In progress)
 2. VT Radar Google Drive Viewing Mirror (Status: Done)
-3. Agentic Process to update the VT Radar (Not implemented)
-4. Agentic Assessment Landscape Framework (ALAF)
+3. Agentic Process to update the VT Radar (Status: Not implemented)
+4. Agentic Assessment Landscape Framework (ALAF) (Status: Not implemented)
+
+## ToDo Checklist
+- [x] 1. Two-way sync between the xlsx workbook and the machine-readable `data/json/` mirror, scripts documented in `scripts-guide.md`
+- [x] 2. Controlled-vocabulary schema (`Dictionary`/`Vocabulary`/`Standards` tabs) backing the workbook, 76 vocabulary terms, 4 standards
+- [x] 3. Branch protection + CODEOWNERS requiring curator review before merge
+- [x] 4. Automated `Verified By`/`Last Verified` stamping from the approving review, on merge
+- [x] 5. Admin-approval gate blocking an unauthorized row deletion
+- [x] 6. Developer/user documentation: this file, `scripts-guide.md`, `user_guides/VT_RADAR.md`
+- [x] 7. VT-Radar one-way sync to a Google Sheet on every push to `main` that changes the workbook, see `scripts-guide.md`
+- [x] 8. VT-Radar config and secret wired through `.github/RADAR-CONFIG` and repo secrets
+- [ ] 9. Enforce the verification rule on a hand-edited JSON commit directly, not only on conversions through the sync script
 
 ## VT Radar xlsx ⇄ JSON Two-Way Sync
 
@@ -31,7 +42,7 @@ The implementation plan has four steps so far:
 
 The controlled vocabulary is backed by four standards where a genuine match exists: [EDAM ontology](http://edamontology.org/topic_3071) (`Data management` branch, primary), [NIST AI RMF 1.0](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf) (secondary axis), ACM Computing Classification System 2012, and Schema.org. Terms with no ontology mapping are project-local.
 
-`data/json/` is a machine-readable mirror (one JSON file per tab) that agents can read and edit directly; `xlsx_to_json.py` and `json_to_xlsx.py` keep it and the xlsx in sync. Any added/removed/edited row clears that row's `Verified By`/`Last Verified`, a human re-approving content they never saw would be a false claim. Old values aren't lost; they're recoverable from git history on the json files.
+`data/json/` is a machine-readable mirror (one JSON file per tab) that agents can read and edit directly; `xlsx_to_json.py` and `json_to_xlsx.py` keep it and the xlsx in sync. Any added/removed/edited row clears that row's `Verified By`/`Last Verified`. Old values stay recoverable from git history on the json files.
 
 ### GitOps Implementation
 
@@ -54,9 +65,9 @@ Do **not** grant Maintain: over Write it adds only repository-metadata powers (d
 
 Write permits merging once branch protection is satisfied (approvals + required checks); it cannot bypass. Admin can merge regardless while `enforce_admins` is `false`.
 
-Repository roles alone do not separate "may approve" from "may merge", both are Write, so a contributor could merge their own PR once a curator approves it. To make that a real boundary, set branch protection `restrictions` (currently unset) naming who may push/merge to `main`. Until then it is convention only.
+Repository roles do not separate "may approve" from "may merge", both are Write, so a contributor can merge their own PR once a curator approves it. To enforce a boundary, set branch protection `restrictions` (currently unset) naming who may push/merge to `main`.
 
-Once a second Write collaborator exists, set `enforce_admins: true` on `main`. It is currently `false` so that a solo admin isn't locked out by rules requiring a second person; that exemption stops being necessary, and becomes a standing hole, as soon as someone else can review.
+Once a second Write collaborator exists, set `enforce_admins: true` on `main`. It is currently `false` so a solo admin isn't locked out by rules requiring a second person.
 
 **Source of truth**: `data/json/*.json`, fully git-tracked. Git history (`git log`/`git blame`) is the audit trail. The xlsx is committed alongside it and kept in sync by targeted cell writes, so it is already correct when a PR merges, there is no separate publish step.
 
@@ -73,23 +84,10 @@ Stamping happens *after* the merge, not on the open PR: `dismiss_stale_reviews` 
 
 No git CLI or branch-pushing is required of contributors or curators, every step is available through GitHub's native web UI (edit-in-browser, drag-and-drop upload, "Approve" button, "Merge" button).
 
-### ToDo Checklist
-- [x] 1. Two-way sync between the xlsx workbook and the machine-readable `data/json/` mirror, scripts documented in `scripts-guide.md`
-- [x] 2. Controlled-vocabulary schema (`Dictionary`/`Vocabulary`/`Standards` tabs) backing the workbook, 76 vocabulary terms, 4 standards
-- [x] 3. Branch protection + CODEOWNERS requiring curator review before merge
-- [x] 4. Automated `Verified By`/`Last Verified` stamping from the approving review, on merge
-- [x] 5. Admin-approval gate blocking an unauthorized row deletion
-- [x] 6. Developer/user documentation: this file, `scripts-guide.md`, `user_guides/VT_RADAR.md`
-- [ ] 7. Enforce the verification rule on a hand-edited JSON commit directly, not only on conversions through the sync script
 
 ## VT Radar Google Drive Viewing Mirror
 
 GitHub's built-in file preview doesn't render `.xlsx` conditional formatting, so the `Maturity Level`/`Resource Type`/`Topic Focus` colour-coding is invisible there. A one-way GitHub Action mirrors `data/VANTAGE-Technology-Radar.xlsx` to a fixed, read-only Google Sheet on every push to `main` that changes the file, converting it to a native Sheet so the formatting renders. `main` stays the only source of truth. 
-
-### ToDo Checklist
-- [x] 1. One-way sync to a Google Sheet on every push to `main` that changes the workbook, see `scripts-guide.md`
-- [x] 2. Config and secret wired through `.github/RADAR-CONFIG` and repo secrets
-
 
 ## Agentic Process to update the VT Radar
 
@@ -98,3 +96,5 @@ Not implemented. No design decisions made yet.
 ## Agentic Assessment Landscape Framework (ALAF)
 
 Not implemented. No design decisions made yet.
+
+

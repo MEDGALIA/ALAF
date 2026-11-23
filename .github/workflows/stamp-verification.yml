@@ -2,7 +2,8 @@ name: Stamp verification on approval
 
 # After a PR merges, if it carried an APPROVED review, writes that reviewer
 # and the approval date into Verified By/Last Verified for whichever rows
-# actually changed in the PR and are still blank.
+# actually changed in the PR and are still blank. Summary files changed by the
+# PR get the same treatment on their `reviewed_by` front matter field. (#36)
 #
 # Pushes straight to main: authenticates as the vt-radar-verification-bot
 # GitHub App, which main's branch protection names as a bypass actor.
@@ -140,6 +141,8 @@ jobs:
             --base-dir "${GITHUB_WORKSPACE}/base/data/json" \
             --write-dir data/json \
             --xlsx data/VANTAGE-Technology-Radar.xlsx \
+            --summaries-dir data/summaries \
+            --base-summaries-dir "${GITHUB_WORKSPACE}/base/data/summaries" \
             --repo "${REPO}" \
             --pr-number "${PR_NUMBER}" 2>&1 | tee "${GITHUB_WORKSPACE}/stamp-output.txt"
 
@@ -152,7 +155,7 @@ jobs:
           set -euo pipefail
           git config user.name "vt-radar-verification-bot[bot]"
           git config user.email "vt-radar-verification-bot[bot]@users.noreply.github.com"
-          git add data/json/ data/VANTAGE-Technology-Radar.xlsx
+          git add data/json/ data/VANTAGE-Technology-Radar.xlsx data/summaries/
           if git diff --cached --quiet; then
             echo "No file changes to push."
           else

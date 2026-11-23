@@ -455,7 +455,79 @@ textarea { resize: vertical; }
 .summary__body code { background: var(--surface); padding: 1px 4px; border-radius: 3px; }
 .summary__source { font-size: 0.85rem; }
 
-.badge--summary { background: var(--accent); color: var(--accent-text); border-color: transparent; margin-left: var(--s2); }
+.summary--empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3);
+}
+
+.summary__none { margin: 0; color: var(--text-muted); }
+
+.btn--secondary { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+
+.staged-kind {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-right: var(--s1);
+}
+
+/* ---- Summary editor ---- */
+
+.editor { padding-top: var(--s3); }
+
+.editor__tabs {
+  display: flex;
+  gap: var(--s1);
+  margin-bottom: var(--s2);
+  border-bottom: 1px solid var(--border);
+}
+
+.editor__tab {
+  font: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: var(--s2) var(--s3);
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.editor__tab.is-active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+.editor__text {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.editor__preview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--s3);
+  background: var(--surface);
+  min-height: 8rem;
+  font-size: 0.9rem;
+}
+
+.editor__actions { display: flex; justify-content: flex-end; gap: var(--s2); margin-top: var(--s2); }
+
+/* A button, not a label: it opens the drawer with the summary expanded. (#36) */
+button.badge--summary {
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: transparent;
+  margin-left: var(--s2);
+}
+
+button.badge--summary:hover { filter: brightness(1.1); }
 
 .drawer__foot {
   display: flex;
