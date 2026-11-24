@@ -567,6 +567,9 @@ body.drawer-open { overflow: hidden; }
 
 .field { margin-bottom: var(--s3); }
 
+.field__row { display: flex; gap: var(--s2); align-items: center; }
+.field__open { flex: none; text-decoration: none; }
+
 .field__label { display: block; font-weight: 600; margin-bottom: var(--s1); }
 .field__hint { margin: 0 0 var(--s1); font-size: 0.8rem; color: var(--text-muted); }
 .field__error { margin: var(--s1) 0 0; color: var(--danger); font-size: 0.85rem; }

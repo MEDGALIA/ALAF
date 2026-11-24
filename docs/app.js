@@ -52,6 +52,8 @@ const state = {
 
 const rowKey = (sheetName, id) => `${sheetName}::${id}`;
 
+const safeUrl = (value) => (/^https?:\/\//i.test(String(value || "").trim()) ? String(value).trim() : "");
+
 const hasSummary = (id) => state.summaries.has(id) || state.stagedSummaries.has(id);
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -430,6 +432,7 @@ function showDrawer(sheetName, record, { expandSummary = false } = {}) {
     </footer>`;
 
   openDrawer();
+  wireUrlField($("#drawer-form"));
   wireSummary(record, sheetName, expandSummary);
   $("#drawer-close").addEventListener("click", closeDrawer);
   $("#drawer-cancel").addEventListener("click", closeDrawer);
@@ -635,11 +638,30 @@ function renderField(field, value) {
     control = `<input type="date" id="${id}" data-key="${escapeHtml(field.key)}" value="${escapeHtml(value || "")}"${describedBy} />`;
   } else if (isMultiLine(field)) {
     control = `<textarea id="${id}" data-key="${escapeHtml(field.key)}" rows="4"${describedBy}>${escapeHtml(value || "")}</textarea>`;
+  } else if (field.key === "url") {
+    // Paired with an Open link so a curator can check the resource without
+    // copying the value out of the field. (#36)
+    const href = safeUrl(value);
+    control = `<div class="field__row">
+      <input type="url" id="${id}" data-key="${escapeHtml(field.key)}" value="${escapeHtml(value || "")}"${describedBy} />
+      <a class="btn btn--ghost btn--sm field__open" id="${id}-open" href="${href || "#"}" target="_blank"
+         rel="noopener" ${href ? "" : "hidden"} aria-label="Open this resource in a new tab">Open</a>
+    </div>`;
   } else {
-    const type = field.key === "url" ? "url" : "text";
-    control = `<input type="${type}" id="${id}" data-key="${escapeHtml(field.key)}" value="${escapeHtml(value || "")}"${describedBy} />`;
+    control = `<input type="text" id="${id}" data-key="${escapeHtml(field.key)}" value="${escapeHtml(value || "")}"${describedBy} />`;
   }
   return `<div class="field"><label class="field__label" for="${id}">${escapeHtml(field.name)}</label>${hint}${control}</div>`;
+}
+
+function wireUrlField(form) {
+  const input = form.querySelector('[data-key="url"]');
+  const link = $("#f-url-open", form);
+  if (!input || !link) return;
+  input.addEventListener("input", () => {
+    const href = safeUrl(input.value);
+    link.hidden = !href;
+    if (href) link.href = href;
+  });
 }
 
 function readField(form, field) {

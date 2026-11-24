@@ -43,6 +43,11 @@ function describe(status, body, path) {
     return "GitHub rate limit reached. Sign in with a token to raise the limit.";
   }
   if (status === 403) return "Token lacks the permissions for this action.";
+  if (status === 404 && path.includes("/actions/workflows/")) {
+    // Workflows are only registered from the default branch, so a file that
+    // exists on a feature branch still 404s here. (#36)
+    return "Workflow not found. It must be merged to the default branch before it can be dispatched.";
+  }
   if (status === 404) return `Not found: ${path}. Check the branch and repo.`;
   if (status === 409) return "Branch conflict. Reload to pick up the latest data.";
   if (status === 422) {
