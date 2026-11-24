@@ -59,8 +59,9 @@ export function toast(message, { type = "info", action } = {}) {
   close.addEventListener("click", () => el.remove());
   el.appendChild(close);
   host.appendChild(el);
-  // Errors stay until dismissed; they usually need an action.
-  if (type !== "error") setTimeout(() => el.remove(), 6000);
+  // Errors and anything carrying a link stay until dismissed. A toast that
+  // offers an action is useless if it vanishes before it is clicked. (#36)
+  if (type !== "error" && !action) setTimeout(() => el.remove(), 6000);
 }
 
 // ---- Button busy state -----------------------------------------------------

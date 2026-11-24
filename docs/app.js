@@ -843,10 +843,10 @@ async function markVerified(button) {
       }
       state.selected.clear();
       renderTable();
-      toast("Verification dispatched. Reload in a minute to see the stamps.", {
-        type: "success",
-        action: { label: "View Actions", href: `${gh.repoUrl()}/actions` },
-      });
+      toast(
+        "Sent to GitHub. A workflow writes Verified By to those rows, then reload this page to see them.",
+        { type: "success", action: { label: "Watch it run", href: `${gh.repoUrl()}/actions` } }
+      );
     } catch (err) {
       toast(err.message, { type: "error" });
     }
