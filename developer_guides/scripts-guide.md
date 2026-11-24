@@ -11,11 +11,11 @@ This guide covers the scripts in [`src/scripts/`](../src/scripts/):
 | `json_to_xlsx.py` | Rebuilds the VT Radar workbook from `data/json/`, the mirror of `xlsx_to_json.py` |
 | `sync_gdrive_mirror.py` | Pushes the workbook to a Google Sheet, for viewing conditional formatting GitHub doesn't render |
 
-All are plain Python 3 scripts with no project framework dependency, they can be run standalone or imported as modules. The VT Radar scripts implement the plan in [`implementation-plan.md`](implementation-plan.md), see that doc for the overall design and current build status.
+All are plain Python 3 scripts with no project framework dependency, runnable standalone or importable as modules. The VT Radar scripts implement the plan in [`backend-implementation-plan.md`](backend-implementation-plan.md).
 
 ## Environment setup
 
-The repo uses a local virtual environment at `.venv/` (already excluded from git via `.gitignore`).
+The repo uses a local virtual environment at `.venv/`.
 
 ```powershell
 python -m venv .venv
@@ -43,7 +43,7 @@ Pinned versions live in [`src/scripts/requirements.txt`](../src/scripts/requirem
 - `input` (positional): path to the source `.docx`
 - `-o / --output`: destination `.md` path (defaults to the input path with a `.md` extension)
 - `--no-images`: skip extracting embedded images
-- `--images-dir NAME`: folder name for extracted images (defaults to `<output-stem>_images`). Pass a fixed name (e.g. `draft_images`) when a file may be re-converted under a different output name, so re-runs reuse the same folder instead of orphaning the old one.
+- `--images-dir NAME`: folder name for extracted images (defaults to `<output-stem>_images`). Pass a fixed name when a file may be re-converted under a different output name, so re-runs reuse the same folder.
 
 **How it works**
 
@@ -51,7 +51,7 @@ Pinned versions live in [`src/scripts/requirements.txt`](../src/scripts/requirem
 2. `markdownify()` converts the resulting HTML into Markdown.
 3. `_clean_markdown()` strips trailing whitespace and collapses runs of 3+ blank lines introduced by the conversion.
 
-Conversion warnings (e.g. unrecognised Word paragraph/run styles) are printed to stderr but do not stop the conversion, they're informational only and don't affect output quality in practice.
+Conversion warnings (e.g. unrecognised Word paragraph/run styles) are printed to stderr but do not stop the conversion.
 
 **Extending it**: to change how a particular Word style is mapped (e.g. custom heading styles), pass a `style_map` string to `mammoth.convert_to_html(..., style_map=...)`, see the [mammoth style-mapping docs](https://github.com/mwilliamson/python-mammoth#writing-style-maps).
 
@@ -84,9 +84,9 @@ Not a standalone script, a shared helper module imported by the VT Radar tooling
 
 `Value Type` drives the whole pipeline: `id`, `free_text`, `date`, `person`, `version`, `controlled_single`, `controlled_multi`. A `controlled_multi` column becomes a real JSON array, split on its `Separator`, so adding a multi-value column needs no code change, only a Dictionary row. `id` is special-cased only by `xlsx_to_json.py`'s auto-assignment step (see below); everywhere else it's treated like any other plain-text column.
 
-`Vocabulary.Ontology` references `Standards.Standard ID`. Four standards are declared: **EDAM** (primary controlled vocabulary, open ontology with permanent per-term URIs), **NIST AI RMF 1.0** (secondary axis for AI-trustworthiness framing; document-based, so no per-term URIs), **ACM Computing Classification System 2012** (general CS taxonomy, cited by category-path text), and **Schema.org** (CreativeWork/SoftwareApplication hierarchy, for `Resource Type`). Terms with no ontology are deliberately project-local rather than force-mapped onto a mismatched external term.
+`Vocabulary.Ontology` references `Standards.Standard ID`. Four standards are declared: **EDAM** (primary controlled vocabulary, open ontology with permanent per-term URIs), **NIST AI RMF 1.0** (secondary axis for AI-trustworthiness framing; document-based, so no per-term URIs), **ACM Computing Classification System 2012** (general CS taxonomy, cited by category-path text), and **Schema.org** (CreativeWork/SoftwareApplication hierarchy, for `Resource Type`). Terms with no ontology are project-local.
 
-> **Careful:** NIST's `Fair (harmful bias managed)` (algorithmic non-discrimination) is unrelated to EDAM's `FAIR data` (Findable/Accessible/Interoperable/Reusable). They share a word and nothing else, the `Standards` tab notes carry this warning too.
+> **Careful:** NIST's `Fair (harmful bias managed)` (algorithmic non-discrimination) is unrelated to EDAM's `FAIR data` (Findable/Accessible/Interoperable/Reusable).
 
 ## `xlsx_to_json.py`
 
@@ -111,13 +111,13 @@ For every row, a `_content_hash` is stored over its substantive fields (excludin
 
 - hash unchanged, verification fields unchanged → carried through untouched (a true no-op);
 - content and/or verification fields changed, and the new `Verified By`/`Last Verified` were freshly and fully supplied in this same edit → trusted as a deliberate re-verification;
-- otherwise → both fields are **cleared**, because a human hasn't reviewed this version. The cleared row is named on stdout.
+- otherwise → both fields are **cleared**. The cleared row is named on stdout.
 
 This applies the same way whether it's the row's *content* that changed, or only its verification fields (e.g. a curator filling in `Last Verified` on a row whose `Verified By` was already set, with nothing else touched), both are treated as edits needing a fresh-verification decision.
 
 Old values are never lost, `data/json/` is git-tracked, so `git log`/`git blame` recovers them.
 
-> **Gotcha worth knowing:** adding or removing a *column* changes every row's hash, so a schema change looks identical to "somebody edited all rows" and would wipe every verification. **After any schema change, run with `--fresh`**, which re-establishes the baseline instead of diffing against differently-shaped JSON. `--fresh` also removes any need to delete files by hand.
+> **After any schema change, run with `--fresh`.** Adding or removing a column changes every row's hash, so without it every verification is wiped. `--fresh` rebuilds the baseline from the workbook.
 
 **Structure validation**: before converting anything, `validate_structure()` checks that every data sheet's columns exactly match what `Dictionary` declares for it, same headers, same order. A mismatch (missing column, unexpected column, wrong order) raises immediately and **no JSON is written at all**, so a malformed upload never partially converts.
 
@@ -129,14 +129,14 @@ Old values are never lost, `data/json/` is git-tracked, so `git log`/`git blame`
 .\.venv\Scripts\python src\scripts\json_to_xlsx.py [--json-dir data/json] [--out PATH]
 ```
 
-The mirror of `xlsx_to_json.py`: rebuilds the **entire** workbook from `data/json/*.json` from scratch, every data sheet plus `Dictionary`/`Vocabulary`/`Standards`, rather than patching cells in place. `data/json/` is the source of truth in the GitOps design (see `implementation-plan.md`); the xlsx is a generated artifact for human consumption, published as a GitHub Release.
+The mirror of `xlsx_to_json.py`: rebuilds the **entire** workbook from `data/json/*.json`, every data sheet plus `Dictionary`/`Vocabulary`/`Standards`, rather than patching cells in place. `data/json/` is the source of truth (see `backend-implementation-plan.md`); the xlsx is a generated artifact.
 
 **Arguments**
 
 - `--json-dir PATH`: source JSON directory (default: `data/json`)
 - `--out PATH`: destination xlsx (default: `data/VANTAGE-Technology-Radar.xlsx`)
 
-**What's guaranteed, what isn't**: content round-trips exactly, every field of every record, and the full `Dictionary`/`Vocabulary`/`Standards` schema, verified field-by-field against the source JSON. Cosmetic details (column widths, frozen header row, bold headers) are sane regenerated defaults, not a clone of any hand-tweaked formatting a curator may have applied to a previous xlsx.
+Content round-trips exactly: every field of every record, plus the full `Dictionary`/`Vocabulary`/`Standards` schema. Cosmetic details (column widths, frozen header row, bold headers) are regenerated defaults, not a clone of hand-tweaked formatting from a previous xlsx.
 
 ## `tech_radar_analysis.py`
 
@@ -155,12 +155,12 @@ Read-only analysis of the workbook, never opens it in write mode, and asserts th
 
 - **Row counts and cell anomalies**, per sheet: empty rows as contiguous ranges, plus type/shape checks keyed off the header: name-like columns flagged if numeric/date; date columns flagged if not a real date cell; `Version` flagged if it *is* a date; `URL` flagged if it doesn't start with `http(s)://`.
 - **Column coverage**: columns in data tabs missing from `Dictionary`, and documented columns no tab actually has.
-- **Vocabulary coverage**: per controlled column: terms used but absent from `Vocabulary`, and documented terms never used. Driven by `Value Type`, so free-text columns are skipped; without that, `Relevance to Research Cyberinfrastructure` (prose sentences by design) would report ~30 bogus "undocumented terms".
+- **Vocabulary coverage**: per controlled column, terms used but absent from `Vocabulary`, and documented terms never used. Driven by `Value Type`, so free-text columns are skipped.
 - **Missing controlled values**: populated rows with an empty controlled-vocabulary cell, which is usually an oversight rather than a deliberate "not applicable".
 - **Ontology coverage**: which vocabulary terms are backed by a declared standard and which aren't.
-- **Review candidates**: near-duplicate term pairs (one term's words a subset of another's, e.g. `Retrieval` vs `Retrieval Agents`) that were deliberately *not* auto-merged, since collapsing them is a semantic judgment rather than a spelling fix.
+- **Review candidates**: near-duplicate term pairs (one term's words a subset of another's, e.g. `Retrieval` vs `Retrieval Agents`). Not auto-merged.
 
-No "corrected" value is ever suggested, deciding what a bad cell *should* say is a human judgment call, not something to guess at for a real WG record. See [`implementation-plan.md`](implementation-plan.md) for why this script is report-only by design.
+The script is report-only. No corrected value is ever suggested or written.
 
 **Output**: a Markdown report (`data/reports/workbook_analysis.md` by default) with per-sheet summary counts (total/empty/populated/anomalous rows) followed by a table of every anomaly found.
 
@@ -170,7 +170,7 @@ No "corrected" value is ever suggested, deciding what a bad cell *should* say is
 .\.venv\Scripts\python src\scripts\sync_gdrive_mirror.py --xlsx data\VANTAGE-Technology-Radar.xlsx --key-file PATH
 ```
 
-Pushes the workbook to a Google Sheet, see `implementation-plan.md`'s "VT Radar Google Drive Viewing Mirror" section for the design. `main` stays the source of truth; this only pushes, never reads the Sheet back.
+Pushes the workbook to a Google Sheet, see the "VT Radar Google Drive Viewing Mirror" section in `backend-implementation-plan.md`. This only pushes, never reads the Sheet back.
 
 **Arguments**
 
@@ -182,6 +182,6 @@ Target Sheet is `gdrive_file_id` in `.github/RADAR-CONFIG`, not a secret; access
 
 ## Adding a new document to convert
 
-1. Manually copy the `.docx` into `drafts/` (gitignored, safe for working files), then manually run `docx_to_md.py` to produce the `.md`. Nothing watches this folder, both steps are run by hand, on demand.
-2. To publish developer-facing documentation, place the `.md` source in `developer_guides/`. GitHub renders it directly, nothing to generate.
+1. Copy the `.docx` into a local working folder, then run `docx_to_md.py` to produce the `.md`. Both steps are run by hand, on demand.
+2. To publish developer-facing documentation, place the `.md` source in `developer_guides/`. GitHub renders it directly.
 3. To publish curator/end-user-facing documentation (e.g. `user_guides/VT_RADAR.md`, "how to submit an xlsx update"), place the `.md` source in `user_guides/`.

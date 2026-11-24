@@ -1,0 +1,76 @@
+name: Suggest a resource
+description: Propose a new entry for the VT Radar knowledge base
+title: "[Resource] "
+labels: ["vt-radar", "suggestion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A curator reviews the resource and adds the row. The fields below are the ones a row needs, so the more you fill in, the faster it lands.
+  - type: input
+    id: name
+    attributes:
+      label: Resource name
+      description: "Short, human-readable. Example: VS Code Copilot Agents Overview"
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL
+    validations:
+      required: true
+  - type: input
+    id: organization
+    attributes:
+      label: Source organization
+      description: "Who maintains it. Example: Microsoft, Anthropic, Google"
+    validations:
+      required: true
+  - type: dropdown
+    id: resource_type
+    attributes:
+      label: Resource type
+      options:
+        - Documentation
+        - API Reference
+        - Specification
+        - Whitepaper
+        - Scientific Literature
+        - Governance Guidance
+        - Security Guidance & Resources
+        - Reference Architecture
+        - Container Registry
+        - Enterprise Control Interface
+        - Inference Framework
+        - Local Application Sandbox
+        - Github Code Repository
+        - Benchmark Collection
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: maturity
+    attributes:
+      label: Maturity level
+      description: About the technology described, not the website
+      options:
+        - Emerging
+        - Research
+        - Mature
+        - Deprecated
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: relevance
+    attributes:
+      label: Why it belongs on the VT Radar
+      description: Its relevance to agentic approaches on research data
+    validations:
+      required: true
+  - type: input
+    id: published
+    attributes:
+      label: Publication or version date
+      description: YYYY-MM-DD if known

@@ -1,0 +1,38 @@
+name: Report a bug
+description: A problem in the scripts, workflows, or the curator UI
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options:
+        - Curator UI (medgalia.github.io/ALAF)
+        - Python scripts (src/scripts)
+        - GitHub Actions workflow
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Browser, OS, or run link
+      description: For UI bugs the browser and OS; for workflow bugs a link to the failed run

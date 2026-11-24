@@ -1,0 +1,76 @@
+name: One-click row verification
+
+# Lets a CODEOWNERS curator stamp Verified By/Last Verified on specific rows
+# without opening a PR, by pushing as vt-radar-verification-bot (the
+# existing branch-protection bypass actor), same pattern as
+# stamp-verification.yml. (#36)
+
+on:
+  workflow_dispatch:
+    inputs:
+      sheet:
+        description: "Sheet file stem, e.g. knowledgebase"
+        required: true
+        type: string
+      row_ids:
+        description: "Comma-separated row IDs to mark verified"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint an installation token for vt-radar-verification-bot
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.VT_RADAR_APP_ID }}
+          private-key: ${{ secrets.VT_RADAR_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Confirm the triggering actor is a listed code owner
+        run: |
+          if ! grep -qE "(^|[[:space:]])@${{ github.actor }}([[:space:]]|$)" .github/CODEOWNERS; then
+            echo "::error::@${{ github.actor }} is not listed in .github/CODEOWNERS -- refusing to stamp verification."
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r src/scripts/requirements.txt
+
+      - name: Stamp verification for the selected rows
+        env:
+          SHEET: ${{ inputs.sheet }}
+          ROW_IDS: ${{ inputs.row_ids }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          python src/scripts/stamp_rows_verified.py \
+            --sheet "$SHEET" \
+            --ids "$ROW_IDS" \
+            --verified-by "@$ACTOR"
+
+      - name: Regenerate the xlsx to match
+        run: python src/scripts/json_to_xlsx.py
+
+      - name: Commit and push directly to main as vt-radar-verification-bot
+        run: |
+          git config user.name "vt-radar-verification-bot[bot]"
+          git config user.email "vt-radar-verification-bot[bot]@users.noreply.github.com"
+          git add data/json/ data/VANTAGE-Technology-Radar.xlsx
+          if git diff --cached --quiet; then
+            echo "No changes to stamp."
+          else
+            git commit -m "One-click verification: ${{ inputs.row_ids }} by @${{ github.actor }}"
+            git push origin HEAD:main
+          fi
