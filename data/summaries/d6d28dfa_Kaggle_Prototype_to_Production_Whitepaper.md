@@ -2,9 +2,9 @@
 id: d6d28dfa
 resource_name: Kaggle Prototype to Production Whitepaper
 url: https://www.kaggle.com/whitepaper-prototype-to-production
-summarized_date: 2026-11-18
-summarized_by: Claude Sonnet 5
-reviewed_by: pbuendia
+summarized_date: 2026-11-24
+summarized_by: @pbuendia
+reviewed_by:
 ---
 
 Technical guide (Google, updated May 2026) on moving AI agents from prototype to production. This summary covers only the security-relevant material, filtered for scientific research data processing involving PII and IP. Skipped: People/Process org chart, CI/CD mechanics, rollout strategies, A2A/MCP interoperability, and tool/agent registries.
@@ -38,4 +38,4 @@ Security is treated as continuous, not a one-time gate:
 - **Act**: immediate containment, a "circuit breaker" disables the affected tool; suspicious requests route to human review to assess scope/impact.
 - **Evolve**: the incident is converted into a permanent regression test (added to the evaluation dataset), guardrails/system prompt are refined to block the specific attack vector, and the fix is deployed through the same automated pipeline used for every other change, closing the vulnerability for good rather than patching it ad hoc.
 
-The paper never names a specific regulation (HIPAA, GDPR). Its output filtering, access control, and leak-prevention guardrails are the operational mechanism such frameworks require, even without naming them.
+The paper never names a specific regulation (HIPAA, GDPR), but it focuses on operational mechanisms like output filtering, access control, and leak-prevention guardrails required by such frameworks.
