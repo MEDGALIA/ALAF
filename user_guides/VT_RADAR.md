@@ -21,6 +21,8 @@ Open https://medgalia.github.io/ALAF/. The table opens on the `Knowledgebase` sh
 - Each row shows **Verified**, **Stale** or **Unverified**, with who verified it and when.
 - Click a resource name to see all its fields. Click the blue **Summary** badge to open its summary directly.
 
+There is also a [read-only Google Sheet mirror](https://docs.google.com/spreadsheets/d/1WxuTo24vhXqiC_asRi-qOs9b_B6WuKunrCSSKivRIag/edit) of the workbook, which shows the colour coding that GitHub cannot display. It is rebuilt from `main` whenever the workbook changes, so **anything you type into the Sheet is overwritten on the next sync**. Use it to look, not to edit.
+
 ## Curator: edit the radar
 
 ### 1. Sign in with your own token

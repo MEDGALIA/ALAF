@@ -87,7 +87,7 @@ No git CLI or branch-pushing is required of contributors or curators, every step
 
 ## VT Radar Google Drive Viewing Mirror
 
-GitHub's built-in file preview doesn't render `.xlsx` conditional formatting, so the `Maturity Level`/`Resource Type`/`Topic Focus` colour-coding is invisible there. A one-way GitHub Action mirrors `data/VANTAGE-Technology-Radar.xlsx` to a fixed, read-only Google Sheet on every push to `main` that changes the file, converting it to a native Sheet so the formatting renders. `main` stays the only source of truth. 
+GitHub's built-in file preview doesn't render `.xlsx` conditional formatting, so the `Maturity Level`/`Resource Type`/`Topic Focus` colour-coding is invisible there. A one-way GitHub Action mirrors `data/VANTAGE-Technology-Radar.xlsx` to a fixed, read-only [Google Sheet](https://docs.google.com/spreadsheets/d/1WxuTo24vhXqiC_asRi-qOs9b_B6WuKunrCSSKivRIag/edit) on every push to `main` that changes the file, converting it to a native Sheet so the formatting renders. `main` stays the only source of truth. 
 
 ## Agentic Process to update the VT Radar
 
