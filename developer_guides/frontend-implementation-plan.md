@@ -52,6 +52,17 @@ A curator listed in `.github/CODEOWNERS` can tick rows in the table and mark the
 
 Each resource may have a Markdown summary in `data/summaries/`, named `<id>_<resource name>.md`. The id prefix maps a file to its row, so no column stores a link. Discovery needs one REST call to list the directory; if it fails the summary affordances are hidden and nothing else is affected. Markdown is escaped before rendering and link hrefs are limited to http, https and mailto. The UI shows which resources have one, renders it in the drawer with its provenance line, and lets a curator write or edit one. Summaries are staged and submitted in the same pull request as row edits. `reviewed_by` is stamped from the approving review on merge.
 
+## Local development
+
+To test the UI locally, no build step in needed. Serve the folder and open it:
+
+```powershell
+cd docs
+python -m http.server 8000
+```
+
+Then open http://localhost:8000. Reads come from `raw.githubusercontent.com` and writes go to `api.github.com`, so everything including sign-in behaves as it does in production. Opening `index.html` from the filesystem does not work, because ES modules are blocked over `file://`.
+
 ## Deployment
 
 Pages serves `docs/` from the branch set in Settings. Assets are sent with `Cache-Control: max-age=600`, so hard reload (`Ctrl+Shift+R`) after a deploy; a soft reload reuses cached ES modules and hides the change for up to ten minutes.

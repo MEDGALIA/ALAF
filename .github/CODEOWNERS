@@ -1,6 +1,7 @@
 # List authorized GitHub reviewers to the right of each file/resource.
 data/json/** @pbuendia @gnanabharathy @seykim10 @patbuen1
 data/VANTAGE-Technology-Radar.xlsx @pbuendia @gnanabharathy @seykim10 @patbuen1
+data/summaries/** @pbuendia @gnanabharathy @seykim10 @patbuen1
 
 # Workflows and the admin list govern what the automation is allowed to do,
 .github/workflows/** @pbuendia
