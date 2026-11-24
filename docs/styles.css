@@ -1,5 +1,8 @@
 /* Design tokens. Light palette on :root, dark only overrides tokens. (#36) */
 :root {
+  /* Declares that the page handles both themes, so the browser stops applying
+     its own force-dark filter to images and native controls. (#36) */
+  color-scheme: light dark;
   --bg: #f6f7f9;
   --surface: #ffffff;
   --surface-2: #f0f2f5;
@@ -105,6 +108,10 @@ a { color: var(--accent); }
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
+
+.topbar__brand { display: flex; align-items: center; gap: var(--s3); min-width: 0; }
+
+.topbar__logo { flex: none; }
 
 .topbar__sub {
   margin: 2px 0 0;
