@@ -150,6 +150,7 @@ Read-only analysis of the workbook, never opens it in write mode, and asserts th
 
 - `--xlsx PATH`: workbook to scan (default: `data/VANTAGE-Technology-Radar.xlsx`)
 - `--out PATH`: Markdown report destination (default: `data/reports/workbook_analysis.md`)
+- `--checklist PATH`: readiness checklist to compare against (default: `data/alaf/ALAF_CHECKLIST.md`)
 
 **What it reports**
 
@@ -159,6 +160,7 @@ Read-only analysis of the workbook, never opens it in write mode, and asserts th
 - **Missing controlled values**: populated rows with an empty controlled-vocabulary cell, which is usually an oversight rather than a deliberate "not applicable".
 - **Ontology coverage**: which vocabulary terms are backed by a declared standard and which aren't.
 - **Review candidates**: near-duplicate term pairs (one term's words a subset of another's, e.g. `Retrieval` vs `Retrieval Agents`). Not auto-merged.
+- **Checklist drift**: `ALAF Checklist Mapping` terms against the checklist's own `##` headings. Headings may be numbered `## 1. Title` or `## (1) Title`.
 
 The script is report-only. No corrected value is ever suggested or written.
 
@@ -179,6 +181,22 @@ Pushes the workbook to a Google Sheet, see the "VT Radar Google Drive Viewing Mi
 - `--config PATH`: RADAR-CONFIG path (default: `.github/RADAR-CONFIG`)
 
 Target Sheet is `gdrive_file_id` in `.github/RADAR-CONFIG`, not a secret; access is controlled by the Sheet's sharing settings. `files.update()` replaces the Sheet's entire content with the latest xlsx, converted via `mimeType: application/vnd.google-apps.spreadsheet`.
+
+## `serve_ui_locally.py`
+
+```powershell
+.\.venv\Scripts\python src\scripts\serve_ui_locally.py --build --serve --port 8123
+```
+
+Serves the curator UI against the working tree instead of GitHub, so a data file can be exercised before it exists on `main`. Copies `docs/` to `.local-ui/` (gitignored), rewrites `RAW_BASE` in the copy's `config.js` to the local server, and places `data/json`, `data/summaries` and `data/alaf` under a `main/` folder so the raw URL shape still matches.
+
+**Arguments**
+
+- `--build`: rebuild `.local-ui/` from `docs/`. Run it after editing anything in `docs/`, the copy is not live.
+- `--serve`: serve `.local-ui/` on localhost
+- `--port N`: port (default: 8123), baked into the rewritten `RAW_BASE`
+
+Writes still target the real `api.github.com`, so use it for read and render checks, not for staging edits. For plain UI work with data already on `main`, `cd docs` and `python -m http.server` is enough.
 
 ## Adding a new document to convert
 

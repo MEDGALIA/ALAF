@@ -2,6 +2,7 @@
 data/json/** @pbuendia @gnanabharathy @seykim10 @patbuen1
 data/VANTAGE-Technology-Radar.xlsx @pbuendia @gnanabharathy @seykim10 @patbuen1
 data/summaries/** @pbuendia @gnanabharathy @seykim10 @patbuen1
+data/alaf/** @pbuendia @gnanabharathy @seykim10 @patbuen1
 
 # Workflows and the admin list govern what the automation is allowed to do,
 .github/workflows/** @pbuendia

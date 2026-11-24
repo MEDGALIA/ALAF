@@ -15,7 +15,8 @@ The frontend implementation plan has three steps so far:
 - [x] 6. One-click row verification, see `Verify`
 - [x] 7. Read, write and edit resource summaries, see `Resource Summaries`
 - [x] 8. Deployment notes, see `Deployment`
-- [ ] 9. Human verification of agentic updates, see `Human Verification of Agentic Updates`
+- [x] 9. ALAF checklist reader, see `ALAF Checklist Reader`
+- [ ] 10. Human verification of agentic updates, see `Human Verification of Agentic Updates`
 
 ## Architecture
 
@@ -52,16 +53,24 @@ A curator listed in `.github/CODEOWNERS` can tick rows in the table and mark the
 
 Each resource may have a Markdown summary in `data/summaries/`, named `<id>_<resource name>.md`. The id prefix maps a file to its row, so no column stores a link. Discovery needs one REST call to list the directory; if it fails the summary affordances are hidden and nothing else is affected. Markdown is escaped before rendering and link hrefs are limited to http, https and mailto. The UI shows which resources have one, renders it in the drawer with its provenance line, and lets a curator write or edit one. Summaries are staged and submitted in the same pull request as row edits. `reviewed_by` is stamped from the approving review on merge.
 
+## ALAF Checklist Reader
+
+`data/alaf/ALAF_CHECKLIST.md` is read in a full-page panel opened from the header, addressable as `#checklist` so the README can link to it and a reload keeps the panel open. Content comes from `raw.githubusercontent.com` like every other read, so nothing Markdown is served from `docs/`.
+
+`markdown.js` covers the constructs the checklist uses that summaries do not: GFM tables, horizontal rules, task list items, and in-document anchors. Task boxes render disabled, the repository copy is the template rather than an answer sheet. Heading ids use GitHub's slug so a link written for github.com resolves in the panel, and anchor clicks are intercepted to scroll within the panel instead of replacing the route. Front matter is stripped and shown as a provenance line.
+
 ## Local development
 
-To test the UI locally, no build step in needed. Serve the folder and open it:
+To test the UI locally, no build step is needed. Serve the folder and open it:
 
 ```powershell
 cd docs
 python -m http.server 8000
 ```
 
-Then open http://localhost:8000. Reads come from `raw.githubusercontent.com` and writes go to `api.github.com`, so everything including sign-in behaves as it does in production. Opening `index.html` from the filesystem does not work, because ES modules are blocked over `file://`.
+Then open [http://localhost:8000](http://localhost:8000). Reads come from `raw.githubusercontent.com` and writes go to `api.github.com`, so everything including sign-in behaves as it does in production. Opening `index.html` from the filesystem does not work, because ES modules are blocked over `file://`.
+
+That serves the UI against `main`, so a data file added on a branch is not visible until it merges. To exercise one before then, `src/scripts/serve_ui_locally.py` serves a copy of `docs/` pointed at the working tree. See `scripts-guide.md`.
 
 ## Deployment
 

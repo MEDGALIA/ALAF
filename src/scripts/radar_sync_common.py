@@ -185,10 +185,9 @@ def load_workbook_schema(wb) -> dict:
                 "separator": r.get("Separator", "") or None,
                 "description": r.get("Description", ""),
                 # Column-level ARGB hex fill, or "". Used for controlled_multi
-                # columns (one value can't carry a per-term colour, so the
-                # whole column gets a single "populated" fill) and for
-                # non-controlled columns with their own highlight rule (e.g.
-                # Last Verified's "recently verified" highlight).
+                # columns, which cannot carry a per-term colour, and for
+                # non-controlled columns with their own highlight rule such as
+                # Last Verified.
                 "colour": r.get("Colour", ""),
                 "terms": terms_by_column.get(name, []),
             }

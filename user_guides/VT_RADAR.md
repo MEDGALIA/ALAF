@@ -20,6 +20,7 @@ Open https://medgalia.github.io/ALAF/. The table opens on the `Knowledgebase` sh
 - **Filters** narrow by sheet, type and maturity. `Needs verification` shows rows that are unverified or over a year old. `Has summary` shows rows that have a written summary.
 - Each row shows **Verified**, **Stale** or **Unverified**, with who verified it and when.
 - Click a resource name to see all its fields. Click the blue **Summary** badge to open its summary directly.
+- **ALAF Checklist** in the header opens the readiness checklist. The boxes are a template to copy, not a form to fill in here.
 
 There is also a [read-only Google Sheet mirror](https://docs.google.com/spreadsheets/d/1WxuTo24vhXqiC_asRi-qOs9b_B6WuKunrCSSKivRIag/edit) of the workbook, which shows the colour coding that GitHub cannot display. It is rebuilt from `main` whenever the workbook changes, so **anything you type into the Sheet is overwritten on the next sync**. Use it to look, not to edit.
 

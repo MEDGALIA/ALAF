@@ -8,13 +8,12 @@ Never opens the xlsx in write mode and never modifies any cell. Reports:
   - vocabulary coverage: terms used but not in the Vocabulary tab, and
     documented terms never used
   - ontology coverage: vocabulary terms not backed by a declared standard
-  - review candidates: near-duplicate terms that were deliberately NOT
-    auto-merged, so a curator can decide
+  - review candidates: near-duplicate terms, reported rather than auto-merged
+  - checklist drift: mapping terms against the checklist's own headings
 
-Nothing is corrected: guessing at real WG records could be worse than
-leaving them alone. Which columns get vocabulary checks is driven by the
-Dictionary tab's Value Type, so free-text columns aren't reported as
-having thousands of "undocumented terms".
+Nothing is corrected. Which columns get vocabulary checks is driven by the
+Dictionary tab's Value Type, so free-text columns are not reported as having
+thousands of undocumented terms.
 
 Usage:
     python tech_radar_analysis.py [--xlsx PATH] [--out data/reports/workbook_analysis.md]
@@ -44,7 +43,7 @@ DEFAULT_OUT = Path("data/reports/workbook_analysis.md")
 # The mapping column's terms are named after the checklist's own items, so the
 # two drift apart silently when either side is edited. See find_checklist_drift.
 CHECKLIST_COLUMN = "ALAF Checklist Mapping"
-DEFAULT_CHECKLIST = Path("ALAF_CHECKLIST.md")
+DEFAULT_CHECKLIST = Path("data/alaf/ALAF_CHECKLIST.md")
 
 NAME_LIKE_HEADERS = {"verified by", "source organization", "resource name"}
 DATE_EXPECTED_HEADERS = {"last verified", "deprecation date", "publication date", "discovery date"}
@@ -159,7 +158,7 @@ def find_missing_controlled(wb, schema: dict, data_sheets: list[str]) -> dict[st
     """Populated rows with an empty controlled-vocabulary cell.
 
     A blank in a controlled column is usually an oversight rather than a
-    deliberate 'not applicable', so it's worth surfacing for curation.
+    deliberate 'not applicable'.
     """
     missing: dict[str, list[tuple]] = {}
     for sheet_name in data_sheets:
@@ -185,9 +184,8 @@ def find_missing_controlled(wb, schema: dict, data_sheets: list[str]) -> dict[st
 def find_checklist_drift(schema: dict, checklist_path: Path) -> dict | None:
     """Compare ALAF Checklist Mapping terms against the checklist's own headings.
 
-    The vocabulary terms are named after the checklist items, so the two can
-    silently diverge when an item is renamed, added, or dropped. Nothing else
-    detects that -- the terms stay valid, they just stop meaning what they say.
+    The vocabulary terms are named after the checklist items, so the two
+    diverge silently when an item is renamed, added or dropped.
 
     Returns None when the column or the checklist file is absent, so this
     degrades quietly rather than failing the whole scan.
@@ -196,9 +194,11 @@ def find_checklist_drift(schema: dict, checklist_path: Path) -> dict | None:
     if col is None or not checklist_path.exists():
         return None
 
-    # Headings look like: "## (3) Agent Manifesto"
+    # Headings look like "## 3. Agent Manifesto" or "## (3) Agent Manifesto".
+    # Only the parenthesized form was matched before, so the scan silently
+    # found zero items after the checklist was renumbered. (#40)
     headings = re.findall(
-        r"^##\s*\(\d+\)\s*(.+?)\s*$",
+        r"^##\s*(?:\(\d+\)|\d+\.)\s*(.+?)\s*$",
         checklist_path.read_text(encoding="utf-8"),
         flags=re.MULTILINE,
     )
@@ -207,10 +207,9 @@ def find_checklist_drift(schema: dict, checklist_path: Path) -> dict | None:
     def norm(s: str) -> str:
         return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
 
-    # A term is allowed to be a shortened form of its heading -- cells hold
-    # several of these, so "Deidentify Data" is preferable to "Deidentify Data
-    # Before Agent Access". Prefix matches are reported but not treated as
-    # drift; only a term that matches no heading at all has actually rotted.
+    # A term may be a shortened form of its heading, since cells hold several.
+    # Prefix matches are reported but not counted as drift; only a term that
+    # matches no heading at all has rotted.
     unmatched_terms = list(terms)
     unmapped_items, shortened = [], []
     for heading in headings:

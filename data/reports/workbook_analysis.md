@@ -153,14 +153,6 @@ Term pairs where one term's words are a subset of the other's. These were left a
 
 ## ALAF Checklist Mapping vs the checklist
 
-Source: `ALAF_CHECKLIST.md` (0 items, 7 vocabulary terms)
+Source: `data/alaf/ALAF_CHECKLIST.md` (7 items, 7 vocabulary terms)
 
-**Terms with no matching checklist item**: the item was renamed or removed, so rows tagged with these now point at nothing:
-
-- `Agent Manifesto`
-- `Deidentify Data`
-- `Human Approval Gate`
-- `Provenance and Reversibility`
-- `Remediate Oversharing`
-- `Runtime PII Screening`
-- `Zero Data Retention`
+In sync: every checklist item has a term and every term has an item.

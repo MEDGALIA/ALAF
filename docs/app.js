@@ -7,6 +7,7 @@ import {
   SHEET_LABELS,
   DEFAULT_SHEET,
   SUMMARIES_DIR,
+  CHECKLIST_PATH,
   VERIFY_WORKFLOW_FILE,
   STALE_VERIFICATION_DAYS,
   TOKEN_HELP_URL,
@@ -1028,11 +1029,73 @@ function wireControls() {
   $("#signin-form").addEventListener("submit", submitToken);
   $("#signin-cancel").addEventListener("click", () => $("#signin-dialog").close());
   $("#token-help").href = TOKEN_HELP_URL;
+
+  $("#open-checklist").addEventListener("click", () => {
+    location.hash = "checklist";
+  });
+  $("#close-reader").addEventListener("click", () => {
+    location.hash = "";
+  });
+  window.addEventListener("hashchange", syncReaderToHash);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("#reader").hidden) location.hash = "";
+  });
+}
+
+// ---- ALAF checklist reader -------------------------------------------------
+
+let checklistMarkdown = null;
+
+function syncReaderToHash() {
+  const reader = $("#reader");
+  if (location.hash.replace(/^#/, "") !== "checklist") {
+    reader.hidden = true;
+    document.body.classList.remove("reader-open");
+    return;
+  }
+  reader.hidden = false;
+  document.body.classList.add("reader-open");
+  reader.scrollTop = 0;
+  $("#close-reader").focus();
+  renderChecklist();
+}
+
+async function renderChecklist() {
+  const body = $("#reader-body");
+  if (checklistMarkdown !== null) return; // Fetched once per page load.
+  renderLoading(body, "Loading the checklist…");
+  try {
+    checklistMarkdown = await gh.fetchRawText(CHECKLIST_PATH, DEFAULT_BRANCH);
+  } catch (err) {
+    renderError(body, err.message, () => {
+      checklistMarkdown = null;
+      renderChecklist();
+    });
+    return;
+  }
+  const { meta, body: md } = parseFrontMatter(checklistMarkdown);
+  body.innerHTML = renderMarkdown(md);
+
+  const parts = [];
+  if (meta.updated_by) parts.push(`Updated by ${meta.updated_by}`);
+  if (meta.updated_date) parts.push(meta.updated_date);
+  parts.push(meta.reviewed_by ? `Reviewed by ${meta.reviewed_by}` : "Not yet reviewed");
+  $("#reader-meta").textContent = parts.join(" · ");
+
+  // In-document links must scroll inside the panel, not replace #checklist. (#40)
+  $$('a[href^="#"]', body).forEach((link) =>
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const target = body.querySelector(`#${CSS.escape(link.getAttribute("href").slice(1))}`);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    })
+  );
 }
 
 async function main() {
   wireControls();
   renderStaged();
+  syncReaderToHash(); // Honour a cold load of #checklist. (#40)
 
   if (gh.hasToken()) {
     try {

@@ -1,36 +1,22 @@
 """Regenerate the VT Radar xlsx from data/json/*.json.
 
-data/json/ is the source of truth; the xlsx is a generated artifact for
-human consumption. This is the mirror of xlsx_to_json.py: it rebuilds the
-**entire** workbook from scratch every run (every sheet, every row, every
-metadata tab) rather than patching cells in place. It never reads the
-previous xlsx. This is unrelated to the narrow write-back xlsx_to_json.py
-does for exactly two stale verification cells -- that's an incidental step
-inside the opposite (xlsx -> json) conversion, not a partial version of
-this script.
+data/json/ is the source of truth; the xlsx is a generated artifact for human
+consumption. Rebuilds the entire workbook from scratch every run, every sheet,
+row and metadata tab, and never reads the previous xlsx.
 
-Cosmetic details (column widths, frozen header row, bold headers) are sane
-regenerated defaults, not a pixel-for-pixel clone of any hand-tweaked
-formatting a curator may have applied to a previous xlsx.
+Column widths, frozen header row and bold headers are regenerated defaults, so
+hand-tweaked formatting in a previous xlsx is not preserved.
 
-URL hyperlinks and conditional-formatting colours *are* regenerated, though
--- they were present in the original workbook (commit 55f1514) and are
-content-adjacent enough (a link you can click, a status colour you can
-scan) that silently dropping them on every regenerate is a real functional
-loss, not just cosmetics. Colours are entirely data-driven: every fill comes
-from a "Colour" cell on the Dictionary or Vocabulary tab (see
-load_workbook_schema in radar_sync_common.py), resolved by column *name*
-against the schema rather than a hardcoded letter, so a rule can't drift out
-of alignment the way the original workbook's did after later column
-inserts, and adding/recolouring a term needs no code change -- just an edit
-to the Vocabulary tab. See drafts/Color-coded-standards.md for how this
-diverged the first time and the original colour values.
+URL hyperlinks and conditional-formatting colours are regenerated, since a
+clickable link and a status colour are content rather than styling. Every fill
+comes from a "Colour" cell on the Dictionary or Vocabulary tab (see
+load_workbook_schema in radar_sync_common.py), resolved by column name rather
+than a hardcoded letter, so recolouring a term needs no code change. A term
+with no Colour set gets no fill.
 
 The "recently verified" cutoff date comes from .github/RADAR-CONFIG
-(recently_verified_after: YYYY-MM-DD), not a hardcoded constant -- the
-original workbook's version of this rule was a literal Excel serial number
-baked in once and left to drift into meaninglessness. CODEOWNERS restricts
-that file to the admin.
+(recently_verified_after: YYYY-MM-DD). CODEOWNERS restricts that file to the
+admin.
 
 Usage:
     python json_to_xlsx.py [--json-dir data/json] [--out PATH] [--config .github/RADAR-CONFIG]
@@ -65,15 +51,10 @@ DATA_SHEET_ORDER = ["knowledgebase", "deprecated", "sota_coding_agents_benchmark
 HEADER_FONT = Font(bold=True)
 HYPERLINK_FONT = Font(color="FF0563C1", underline="single")
 
-# No colours are hardcoded here. Every fill comes from the "Colour" field on
-# Dictionary/Vocabulary rows (surfaced by radar_sync_common.load_workbook_schema
-# as columns[i]["colour"] and columns[i]["terms"][j]["colour"]), so a term
-# added, renamed, or recoloured in the Vocabulary tab takes effect on the
-# next regenerate with no code change. A term or column with no Colour set
-# simply gets no fill -- there is deliberately no fallback constant to drift
-# out of sync the way the original hardcoded values did. See
-# drafts/Color-coded-standards.md for the original colours and how they were
-# seeded into data/json/dictionary.json.
+# No colours are hardcoded. Every fill comes from the "Colour" field on
+# Dictionary/Vocabulary rows, surfaced by radar_sync_common.load_workbook_schema
+# as columns[i]["colour"] and columns[i]["terms"][j]["colour"]. No fallback
+# constant: a term with no Colour set gets no fill.
 
 
 def _autosize(ws: Worksheet, headers: list[str]) -> None:

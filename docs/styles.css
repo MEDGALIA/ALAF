@@ -684,3 +684,77 @@ ins { color: var(--ok); text-decoration: none; }
 
 /* Write-only affordances stay hidden until a token grants write access. */
 body:not(.can-write) .verify-bar { display: none !important; }
+
+/* ALAF checklist reader. Centred sheet, not a side drawer, because the
+   checklist is read end to end rather than scanned beside the table. (#40) */
+.topbar__actions { display: flex; align-items: center; gap: var(--s3); }
+
+.reader {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.reader__head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.reader__head h2 { margin: 0; font-size: 1.15rem; }
+.reader__meta { margin: var(--s1) 0 0; color: var(--text-muted); font-size: 0.85rem; }
+
+.reader__body {
+  width: min(78ch, 100%);
+  margin: 0 auto;
+  padding: var(--s5) var(--s4) var(--s6);
+  line-height: 1.65;
+}
+
+.reader__body h3 { margin: var(--s6) 0 var(--s3); font-size: 1.3rem; }
+.reader__body h4 { margin: var(--s5) 0 var(--s2); font-size: 1.05rem; }
+.reader__body h5 { margin: var(--s4) 0 var(--s2); font-size: 0.95rem; }
+.reader__body p { margin: 0 0 var(--s3); }
+.reader__body hr { border: 0; border-top: 1px solid var(--border); margin: var(--s5) 0; }
+.reader__body code {
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+}
+
+.reader__body ul, .reader__body ol { margin: 0 0 var(--s3); padding-left: var(--s5); }
+.reader__body li { margin-bottom: var(--s1); }
+
+/* Task items read as answer boxes, so drop the bullet and align the control. */
+.reader__body li.md-task { list-style: none; margin-left: calc(var(--s5) * -1); }
+.reader__body li.md-task input { margin-right: var(--s2); }
+
+/* Wide tables scroll in their own box; the page never scrolls sideways. */
+.md-table { overflow-x: auto; margin: 0 0 var(--s4); }
+.md-table table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+.md-table th, .md-table td {
+  border: 1px solid var(--border);
+  padding: var(--s2) var(--s3);
+  text-align: left;
+  vertical-align: top;
+}
+.md-table th { background: var(--surface-2); font-weight: 600; }
+
+body.reader-open { overflow: hidden; }
+
+@media (max-width: 640px) {
+  .reader__head { padding: var(--s3) var(--s4); }
+  .reader__body { padding: var(--s4) var(--s3) var(--s5); }
+}

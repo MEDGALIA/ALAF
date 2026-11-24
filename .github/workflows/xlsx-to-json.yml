@@ -25,7 +25,7 @@ jobs:
   sync:
     # Skip the bot's own sync push. Must stay a job-level guard, not a
     # [skip ci] commit-message tag, which suppresses every later workflow
-    # on the PR including the post-merge verification stamp. (#16)
+    # on the PR including the post-merge verification stamp. (PR #16)
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.actor != 'github-actions[bot]'

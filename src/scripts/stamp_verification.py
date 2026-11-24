@@ -1,22 +1,14 @@
 """Stamp Verified By/Last Verified from a PR's approval, once merged.
 
-Runs after a PR merges (pull_request: closed, merged == true) and only if
-it carries an APPROVED review -- approving a PR is meant to be the act of
-verifying, but nothing wrote that into the data until now.
+Runs after a PR merges and only if it carries an APPROVED review.
 
-Writes directly into a checkout of `main`. This is safe against `main`'s
-branch protection because the caller authenticates as the `vt-radar-
-verification-bot` GitHub App, which is named in `main`'s
-`bypass_pull_request_allowances` -- the built-in Actions app can't be
-granted that (tested: accepted with HTTP 200, then silently dropped), only
-a self-created GitHub App can. See drafts/VANTAGE-Tech-Radar-Sync-Plan.md,
-Step 4.
+Writes directly into a checkout of `main`. The caller authenticates as the
+`vt-radar-verification-bot` GitHub App, named in `main`'s
+`bypass_pull_request_allowances`. The built-in Actions app cannot be granted
+that, only a self-created GitHub App can. (PR #20)
 
-Only rows whose content actually changed in this PR, and whose
-verification is currently blank, get stamped -- a row the editor already
-self-attested (fully supplied + freshly touched, xlsx_to_json.py's
-existing trust path) keeps that specific claim rather than being
-overwritten by a generic approver stamp.
+Only rows whose content actually changed in this PR, and whose verification
+is currently blank, get stamped.
 
 Usage:
     python stamp_verification.py --base-dir DIR --write-dir DIR --xlsx PATH
@@ -53,9 +45,8 @@ def _load_records(json_dir: Path) -> dict[str, tuple[str, dict]]:
 def find_changed_row_ids(base_dir: Path, head_dir: Path) -> set[str]:
     """IDs whose substantive content differs between base and head.
 
-    New rows (no base counterpart) count as changed. Verification-only
-    edits do not: content_hash() already excludes verified_by/last_verified,
-    the same exclusion xlsx_to_json.py relies on elsewhere.
+    New rows count as changed. Verification-only edits do not, because
+    content_hash() excludes verified_by/last_verified.
     """
     base = _load_records(base_dir)
     head = _load_records(head_dir)
@@ -122,11 +113,12 @@ def apply_xlsx_stamps(xlsx_path: Path, row_ids: set[str], approver: str, approve
     wb.save(xlsx_path)
 
 
-def stamp_summaries(head_dir: Path, base_dir: Path, reviewer: str) -> list[str]:
-    """Fill a blank `reviewed_by` on summary files this PR changed.
+def stamp_markdown(head_dir: Path, base_dir: Path, reviewer: str) -> list[str]:
+    """Fill a blank `reviewed_by` on Markdown files this PR changed.
 
-    Same rule the rows follow: only files touched by the PR, and only where
-    the field is still blank, so a hand-entered reviewer is never overwritten.
+    Only files touched by the PR, and only where the field is still blank, so a
+    hand-entered reviewer is never overwritten. Used for data/summaries and
+    data/alaf, which share the front matter key. (#40)
     """
     if not head_dir.is_dir():
         return []
@@ -154,6 +146,8 @@ def main() -> None:
     parser.add_argument("--pr-number", type=int, required=True)
     parser.add_argument("--summaries-dir", type=Path, help="data/summaries inside the main checkout")
     parser.add_argument("--base-summaries-dir", type=Path, help="data/summaries in the base worktree")
+    parser.add_argument("--alaf-dir", type=Path, help="data/alaf inside the main checkout")
+    parser.add_argument("--base-alaf-dir", type=Path, help="data/alaf in the base worktree")
     args = parser.parse_args()
 
     approval = approving_review(args.repo, args.pr_number)
@@ -163,10 +157,14 @@ def main() -> None:
     handle, approved_date = approval
     approver = f"@{handle}"
 
-    if args.summaries_dir and args.base_summaries_dir:
-        summaries = stamp_summaries(args.summaries_dir, args.base_summaries_dir, approver)
-        if summaries:
-            print(f"Stamped reviewed_by={approver} on {len(summaries)} summary file(s): {summaries}")
+    for head_dir, base_dir, label in (
+        (args.summaries_dir, args.base_summaries_dir, "summary"),
+        (args.alaf_dir, args.base_alaf_dir, "ALAF"),
+    ):
+        if head_dir and base_dir:
+            files = stamp_markdown(head_dir, base_dir, approver)
+            if files:
+                print(f"Stamped reviewed_by={approver} on {len(files)} {label} file(s): {files}")
 
     changed_ids = find_changed_row_ids(args.base_dir, args.write_dir)
     if not changed_ids:

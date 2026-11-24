@@ -2,8 +2,12 @@ name: Stamp verification on approval
 
 # After a PR merges, if it carried an APPROVED review, writes that reviewer
 # and the approval date into Verified By/Last Verified for whichever rows
-# actually changed in the PR and are still blank. Summary files changed by the
-# PR get the same treatment on their `reviewed_by` front matter field. (#36)
+# actually changed in the PR and are still blank. Markdown files under
+# data/summaries and data/alaf changed by the PR get the same treatment on
+# their `reviewed_by` front matter field. (#36, #40)
+#
+# No `paths:` filter, so a PR touching only data/alaf still reaches this job.
+# Adding one later must include data/alaf/** or checklist stamping stops. (#40)
 #
 # Pushes straight to main: authenticates as the vt-radar-verification-bot
 # GitHub App, which main's branch protection names as a bypass actor.
@@ -12,7 +16,7 @@ name: Stamp verification on approval
 #
 # This job deliberately has no job-level `if:`. It always runs and always
 # logs the decision it made, so "no entry in the Actions tab" has exactly
-# one meaning: GitHub never dispatched the event. (#16)
+# one meaning: GitHub never dispatched the event. (PR #16)
 #
 # No loop risk: this workflow's own stamp commit only touches
 # verified_by/last_verified, which content_hash() excludes from what counts
@@ -88,7 +92,7 @@ jobs:
       # Minted BEFORE the checkout: actions/checkout persists whatever token
       # it is given as a git http.extraheader, so checking out with the App
       # token means the push goes out as vt-radar-verification-bot, not
-      # github-actions[bot] (which main's protection rejects, #20).
+      # github-actions[bot] (which main's protection rejects, PR #20).
       - name: Mint an installation token for vt-radar-verification-bot
         id: app-token
         if: steps.decide.outputs.proceed == 'true'
@@ -143,6 +147,8 @@ jobs:
             --xlsx data/VANTAGE-Technology-Radar.xlsx \
             --summaries-dir data/summaries \
             --base-summaries-dir "${GITHUB_WORKSPACE}/base/data/summaries" \
+            --alaf-dir data/alaf \
+            --base-alaf-dir "${GITHUB_WORKSPACE}/base/data/alaf" \
             --repo "${REPO}" \
             --pr-number "${PR_NUMBER}" 2>&1 | tee "${GITHUB_WORKSPACE}/stamp-output.txt"
 
@@ -155,7 +161,9 @@ jobs:
           set -euo pipefail
           git config user.name "vt-radar-verification-bot[bot]"
           git config user.email "vt-radar-verification-bot[bot]@users.noreply.github.com"
-          git add data/json/ data/VANTAGE-Technology-Radar.xlsx data/summaries/
+          # Staging is separate from stamping: a stamped file that is never
+          # staged is never pushed. (#40)
+          git add data/json/ data/VANTAGE-Technology-Radar.xlsx data/summaries/ data/alaf/
           if git diff --cached --quiet; then
             echo "No file changes to push."
           else
