@@ -1,3 +1,10 @@
+---
+title: ALAF Readiness Checklist
+updated_date: 2026-11-24
+updated_by: @pbuendia
+reviewed_by:
+---
+
 # ALAF Readiness Checklist
 
 A self-assessment for an organization preparing to give AI agents access to its data.
@@ -27,7 +34,7 @@ A `No` means the organization is not ready for that agent.
 
 **Explanation**: The first step in any AI rollout, and the one Microsoft puts first in its own guidance for Copilot. It means checking who can reach your sensitive data, and cutting off access that shouldn't be there, before the agent can read any of it.
 
-"Permissions" is broader than ACLs and IAM. See [Appendix A](#appendix-a-access-granting-mechanisms-to-audit) for the mechanisms to audit.
+"Permissions" is broader than ACLs and IAM. See [Appendix A](#access-granting-mechanisms-to-audit) for the mechanisms to audit.
 
 
 ---

@@ -1,17 +1,15 @@
 """Push data/VANTAGE-Technology-Radar.xlsx to a Google Sheet, for viewing.
 
-GitHub's own file preview does not render .xlsx conditional formatting --
-the colour-coding on Maturity Level / Resource Type / Topic Focus is
-invisible there. Google Sheets renders it correctly in a browser. See
-drafts/VT-Radar-GDrive-Mirror-Plan.md for the full design.
+GitHub's file preview does not render .xlsx conditional formatting, so the
+colour-coding on Maturity Level, Resource Type and Topic Focus is invisible
+there. Google Sheets renders it in a browser. See the Google Drive mirror
+section in developer_guides/backend-implementation-plan.md.
 
-main on GitHub stays the only source of truth. This script only pushes;
-nothing ever reads the Sheet back. The Sheet is shared Viewer-only to
-humans, so nobody can edit it in the first place.
+main on GitHub stays the only source of truth. This script only pushes, nothing
+reads the Sheet back, and the Sheet is shared Viewer-only.
 
-The target file ID lives in .github/RADAR-CONFIG (gdrive_file_id) -- not a
-secret, since access is controlled by the Sheet's own sharing settings, not
-by hiding the ID.
+The target file ID lives in .github/RADAR-CONFIG (gdrive_file_id). Not a secret,
+since access is controlled by the Sheet's sharing settings.
 
 Usage:
     python sync_gdrive_mirror.py --xlsx PATH --key-file PATH
@@ -35,13 +33,10 @@ from radar_sync_common import DEFAULT_RADAR_CONFIG, load_radar_config
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
-# drive.file (the narrower scope) only sees files the service account itself
-# created, or that were explicitly opened through a consent flow. Being
-# shared as Editor via the normal Share dialog isn't enough to make a file
-# visible under drive.file -- the API returns 404, not 403, even though the
-# permission is real (confirmed live: sharing was correct, drive.file still
-# 404'd). The full drive scope, combined with the actual sharing grant,
-# gives access to exactly the files shared with it -- not anyone else's.
+# The narrower drive.file scope only sees files the service account created
+# itself. A file shared with it through the Share dialog returns 404, not 403.
+# The full drive scope plus the sharing grant reaches exactly the files shared
+# with the account.
 
 
 def push_to_drive(xlsx_path: Path, file_id: str, key_file: Path) -> None:

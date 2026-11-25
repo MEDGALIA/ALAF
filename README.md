@@ -20,6 +20,14 @@ and provenance of the framework and its underlying knowledge.
 
 ALAF evaluates agentic system architecture and implementations used on scientific research data, it does not write or replace regulatory policy (HIPAA, GDPR, institutional IRB rules, etc.). A VT Radar resource counts as compliance-relevant if it helps keep data safe and describes access control, PII handling, leak prevention, whether or not it names a specific regulation.
 
+## ALAF Readiness Checklist
+
+A self-assessment an organization completes before giving AI agents access to its
+data. Seven items, each with a blocker rule.
+
+- Read it in the browser: [ALAF Readiness Checklist](https://medgalia.github.io/ALAF/#checklist)
+- Read the source file: [data/alaf/ALAF_CHECKLIST.md](data/alaf/ALAF_CHECKLIST.md)
+
 ## Status
 
 **Early development / experimental**

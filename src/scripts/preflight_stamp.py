@@ -1,22 +1,11 @@
-"""Check that verification stamping *can* succeed, before anyone tests it live.
+"""Check that verification stamping can succeed, before testing it live.
 
-Every failure of this feature so far was a configuration problem that only
-surfaced when the workflow tried to push, after a full contributor -> curator
--> merge cycle had already been spent:
+Asserts from repository state alone the conditions that have broken stamping
+before: a `[skip ci]` token suppressing later workflows (PR #16), actions/checkout
+persisting a token that overrides the App credentials (PR #20), and branch
+protection carrying no bypass for required status checks (PR #23).
 
-  PR #16  a `[skip ci]` in the sync bot's commit message suppressed every
-          later workflow on the PR, so the stamp workflow never ran at all
-  PR #20  actions/checkout persisted its token as a git auth header, which
-          overrode the App credentials set later via `git remote set-url`,
-          so the push went out as github-actions[bot] and was refused
-  PR #23  classic branch protection has no bypass for *required status
-          checks*, only for the "a pull request is required" rule, so the
-          App's push to main was rejected with GH006
-
-Each of those is detectable from repository state alone. This script asserts
-all of them read-only, in seconds. Run it after any change to branch
-protection, workflows, secrets, or the App -- and before asking a human to
-test.
+Run it after any change to branch protection, workflows, secrets, or the App.
 
 Read-only: performs no writes and needs only a `gh` login with repo read.
 
@@ -83,11 +72,11 @@ def check_secrets(repo: str) -> Check:
 
 
 def check_ruleset_bypass(repo: str) -> Check:
-    """The App must be able to bypass *every* rule, not just the PR rule.
+    """The App must be able to bypass every rule, not just the PR rule.
 
-    This is the PR #23 failure: `bypass_pull_request_allowances` under classic
-    protection waives only the pull-request requirement, never required status
-    checks. A ruleset's bypass_actors list covers all rules at once.
+    Classic protection's `bypass_pull_request_allowances` waives only the
+    pull-request requirement, never required status checks. A ruleset's
+    bypass_actors covers all rules at once. (PR #23)
     """
     c = Check("App can bypass all rules on main (ruleset bypass_actors)")
     rules = gh_json("repos/{repo}/rules/branches/main", repo)
@@ -111,20 +100,18 @@ def check_ruleset_bypass(repo: str) -> Check:
                     f"mode={actor.get('bypass_mode')}"
                 )
     return c.failed(
-        "no GitHub App listed in bypass_actors -- the stamp push to main will "
-        "be rejected (this was the PR #23 failure)"
+        "no GitHub App listed in bypass_actors: the stamp push to main will "
+        "be rejected (PR #23)"
     )
 
 
 def check_admin_can_bypass(repo: str) -> Check:
     """A repo admin must be able to merge a PR they authored themselves.
 
-    GitHub forbids self-approval, and CODEOWNERS names the curator for
-    data/json/**, so on a PR the curator opened there is nobody whose approval
-    satisfies the rule. Classic protection covered this with
-    `enforce_admins: false`; a ruleset needs RepositoryRole 5 (admin) listed
-    in bypass_actors. Migrating without it silently strands the curator on
-    their own PRs with "Merging is blocked".
+    GitHub forbids self-approval, so on a PR the curator opened against a path
+    they own, nobody's approval satisfies the rule. A ruleset needs
+    RepositoryRole 5 (admin) in bypass_actors, the equivalent of classic
+    protection's `enforce_admins: false`.
     """
     c = Check("Repo admins can bypass (can merge their own PRs)")
     rules = gh_json("repos/{repo}/rules/branches/main", repo)
@@ -170,9 +157,9 @@ def check_classic_protection_gone(repo: str) -> Check:
 def check_app_exists(repo: str) -> Check:
     """Confirm the App exists and is owned by the same org as the repo.
 
-    `repos/{repo}/installation` would be the direct check, but it requires the
-    App's own JWT -- a normal user token gets 401. The public app endpoint is
-    readable, and the bypass check below proves the installation is wired up.
+    `repos/{repo}/installation` needs the App's own JWT and returns 401 for a
+    user token, so this reads the public app endpoint instead. The bypass check
+    below proves the installation is wired up.
     """
     c = Check(f"App '{APP_SLUG}' exists and is owned by the repo's org")
     data = gh_json(f"apps/{APP_SLUG}", repo)
@@ -188,9 +175,9 @@ def check_app_exists(repo: str) -> Check:
 def check_no_skip_ci() -> Check:
     """A bot commit carrying [skip ci] becomes the PR's head commit.
 
-    GitHub honours skip directives on a PR's head commit, which suppresses
-    every later workflow on that PR -- including the post-merge stamp. That
-    was the PR #16 failure, and it is silent: no run is created at all.
+    GitHub honours skip directives on a PR's head commit, suppressing every
+    later workflow on that PR including the post-merge stamp. No run is
+    created, so the failure is silent. (PR #16)
     """
     c = Check("No workflow writes a [skip ci] commit message")
     offenders = []
@@ -202,8 +189,8 @@ def check_no_skip_ci() -> Check:
                 offenders.append(f"{path.name}:{num}")
     if offenders:
         return c.failed(
-            f"{', '.join(offenders)} -- this silently suppresses all later "
-            f"workflows on the PR (the PR #16 failure)"
+            f"{', '.join(offenders)}: silently suppresses all later workflows "
+            f"on the PR (PR #16)"
         )
     return c.passed(f"checked {len(list(WORKFLOWS.glob('*.yml')))} workflow file(s)")
 
@@ -212,9 +199,8 @@ def check_token_before_checkout() -> Check:
     """actions/checkout persists its token as a git http.extraheader.
 
     That header wins over credentials placed in the remote URL afterwards, so
-    the App token must be minted *before* the checkout and passed to it via
-    `token:` -- otherwise the push goes out as github-actions[bot] and is
-    rejected. That was the PR #20 failure.
+    the App token must be minted before the checkout and passed to it via
+    `token:`, or the push goes out as github-actions[bot] and is rejected. (PR #20)
     """
     c = Check("Stamp workflow checks out using the App token")
     path = WORKFLOWS / "stamp-verification.yml"
@@ -228,8 +214,8 @@ def check_token_before_checkout() -> Check:
 
     if re.search(r"git\s+remote\s+set-url", text):
         return c.failed(
-            "uses `git remote set-url` to inject the token -- ineffective, the "
-            "checkout's auth header takes priority (the PR #20 failure)"
+            "uses `git remote set-url` to inject the token: ineffective, the "
+            "checkout's auth header takes priority (PR #20)"
         )
 
     # Match the step declarations themselves, not incidental mentions.
@@ -275,7 +261,7 @@ def main() -> int:
         print(f"{len(failed)} check(s) failed -- stamping would not succeed. "
               f"Fix these before running a live test.")
         return 1
-    print("All checks passed. Verification stamping is expected to work.")
+    print("All checks passed. Verification stamping is next.")
     return 0
 
 

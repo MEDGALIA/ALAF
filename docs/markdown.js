@@ -15,8 +15,22 @@ export function parseFrontMatter(text) {
 }
 
 // Blocks HTML and javascript: URLs; everything is escaped before this runs.
+// In-document fragments are allowed so the checklist's cross references work;
+// they stay same-tab and are intercepted by the reader panel. (#40)
 function safeHref(url) {
-  return /^(https?:|mailto:)/i.test(url.trim()) ? url.trim() : "";
+  const u = url.trim();
+  if (/^#[A-Za-z0-9_-]+$/.test(u)) return u;
+  return /^(https?:|mailto:)/i.test(u) ? u : "";
+}
+
+// GitHub's heading slug: lowercase, drop punctuation, spaces to hyphens.
+export function slug(text) {
+  return text
+    .toLowerCase()
+    .replace(/[`*_[\]()]/g, "")
+    .replace(/[^a-z0-9 -]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
 }
 
 function inline(escaped) {
@@ -24,10 +38,36 @@ function inline(escaped) {
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (whole, text, url) => {
       const href = safeHref(url);
-      return href ? `<a href="${href}" target="_blank" rel="noopener">${text}</a>` : whole;
+      if (!href) return whole;
+      const external = !href.startsWith("#");
+      const attrs = external ? ' target="_blank" rel="noopener"' : "";
+      return `<a href="${href}"${attrs}>${text}</a>`;
     })
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
+    .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
+    // Last, so an escaped asterisk is never read as emphasis. (#40)
+    .replace(/\\([*_`[\]()#\\])/g, "$1");
+}
+
+// A GFM pipe table: header row, delimiter row, then body rows.
+function renderTable(rows) {
+  const cells = (row) =>
+    row
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((c) => c.trim());
+  const head = cells(rows[0]);
+  const body = rows.slice(2).map(cells);
+  const th = head.map((c) => `<th>${inline(c)}</th>`).join("");
+  const tr = body
+    .map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`)
+    .join("");
+  return `<div class="md-table"><table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
+}
+
+function isTableDelimiter(line) {
+  return /^\|[\s:|-]+\|$/.test(line) && line.includes("-");
 }
 
 export function renderMarkdown(md) {
@@ -35,6 +75,7 @@ export function renderMarkdown(md) {
   const out = [];
   let list = null; // "ul" | "ol"
   let para = [];
+  let table = [];
 
   const closeList = () => {
     if (list) {
@@ -48,13 +89,39 @@ export function renderMarkdown(md) {
       para = [];
     }
   };
+  // A pipe run is only a table with a delimiter row; otherwise it is text.
+  const closeTable = () => {
+    if (!table.length) return;
+    if (table.length >= 2 && isTableDelimiter(table[1])) out.push(renderTable(table));
+    else table.forEach((row) => out.push(`<p>${inline(row)}</p>`));
+    table = [];
+  };
+  const closeAll = () => {
+    closePara();
+    closeList();
+    closeTable();
+  };
 
   for (const line of lines) {
     const trimmed = line.trim();
 
     if (!trimmed) {
+      closeAll();
+      continue;
+    }
+
+    if (trimmed.startsWith("|")) {
       closePara();
       closeList();
+      table.push(trimmed);
+      continue;
+    }
+    closeTable();
+
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      closePara();
+      closeList();
+      out.push("<hr>");
       continue;
     }
 
@@ -63,7 +130,8 @@ export function renderMarkdown(md) {
       closePara();
       closeList();
       const level = Math.min(heading[1].length + 2, 6); // page h1/h2 are taken
-      out.push(`<h${level}>${inline(heading[2])}</h${level}>`);
+      // Id matches GitHub's slug so links written for github.com resolve here. (#40)
+      out.push(`<h${level} id="${slug(heading[2])}">${inline(heading[2])}</h${level}>`);
       continue;
     }
 
@@ -74,17 +142,26 @@ export function renderMarkdown(md) {
       const wanted = bullet ? "ul" : "ol";
       if (list !== wanted) {
         closeList();
-        out.push(`<${wanted}>`);
+        out.push(`<${wanted}${wanted === "ul" ? ' class="md-list"' : ""}>`);
         list = wanted;
       }
-      out.push(`<li>${inline((bullet || numbered)[1])}</li>`);
+      const item = (bullet || numbered)[1];
+      // Read-only task box: this repo's copy is the template, not an answer sheet. (#40)
+      const task = /^\[([ xX])\]\s+(.*)$/.exec(item);
+      if (task) {
+        const checked = task[1].toLowerCase() === "x" ? " checked" : "";
+        out.push(
+          `<li class="md-task"><input type="checkbox" disabled${checked}> ${inline(task[2])}</li>`
+        );
+      } else {
+        out.push(`<li>${inline(item)}</li>`);
+      }
       continue;
     }
 
     closeList();
     para.push(trimmed);
   }
-  closePara();
-  closeList();
+  closeAll();
   return out.join("\n");
 }

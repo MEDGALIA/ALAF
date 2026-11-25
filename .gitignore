@@ -227,3 +227,6 @@ user_guides_html/
 
 # Claude Code local (personal) settings, not shared
 .claude/settings.local.json
+
+# Local UI harness built by src/scripts/serve_ui_locally.py (#40)
+.local-ui/

@@ -5,68 +5,47 @@ Bootstraps data/json/ from data/VANTAGE-Technology-Radar.xlsx, and is re-run
 whenever the xlsx changes (by hand, or by the GitHub Action that reacts to an
 uploaded xlsx in a PR).
 
-The Dictionary/Vocabulary/Standards tabs are the schema, not records: they
+The Dictionary/Vocabulary/Standards tabs are the schema, not records. They
 become data/json/dictionary.json, with each column's controlled-vocabulary
-terms (and their ontology mappings) nested underneath it. That schema also
-drives the conversion -- a column declared `controlled_multi` becomes a real
-JSON array, split on the separator the Dictionary tab specifies, rather than
-the script hardcoding column names.
+terms and ontology mappings nested underneath it. That schema drives the
+conversion, so a column declared `controlled_multi` becomes a JSON array split
+on the separator the Dictionary tab specifies, with no column names hardcoded.
 
-Row identity: each sheet's first column, `ID`, is the natural key used to
-match a row across runs -- a system-generated value, independent of
-`Resource Name`, so renaming a resource doesn't look like deleting one row
-and adding an unrelated new one. Any row found with a blank `ID` cell gets
-one assigned and written back into the xlsx before conversion starts (see
-`assign_missing_ids()`). If an existing row's content changed since the last
-run, its Verified By/Last Verified are cleared -- UNLESS a human filled in
-both fields in that same xlsx edit, which is treated as a deliberate
-re-verification and kept as-is: editing a row and re-confirming Verified By
-in the same pass is exactly how a human is expected to (re-)verify it. A
-brand-new row (no known prior baseline at all) always has its verification
-trusted as-is, for the same reason.
+Row identity: each sheet's first column, `ID`, is a system-generated key
+independent of `Resource Name`, so renaming a resource is not seen as a delete
+plus an add. A blank `ID` cell gets one assigned and written back into the xlsx
+before conversion starts, see `assign_missing_ids()`.
 
-Rows whose ID no longer appears in a sheet are checked against every other
-data sheet before being reported: if the same ID now exists elsewhere (e.g.
-a row moved from `Knowledgebase` to `Deprecated`, ID copied along with the
-rest of the row), it's reported as a move, not a deletion. If the ID exists
-nowhere else, it's reported as a deletion -- which today is only *reported*,
-not blocked; enforcing "only an admin-merged PR may delete a row" is a
-GitHub Action-side check (checklist item 19), not something this script can
-decide on its own, since it has no notion of who's running it or approving
-the PR.
+If an existing row's content changed since the last run, its Verified By/Last
+Verified are cleared, unless a human filled in both fields in that same xlsx
+edit, which counts as a deliberate re-verification. A brand-new row has its
+verification trusted as-is.
 
-`Added/Edited By` records who or what last touched a row's content --
-self-declared in the cell by default, but overwritten with the value passed
-via `--actor` on any row whose content actually changed in this run. Omit
-`--actor` for a local run to leave the field as self-declared; a GitHub
-Action passes its own trusted identity (e.g. `github.actor`) instead of
-trusting free text.
+Rows whose ID no longer appears in a sheet are checked against every other data
+sheet first: an ID that now exists elsewhere is reported as a move, not a
+deletion. Deletions are reported, not blocked. Enforcement is a GitHub Action
+check, since this script has no notion of who is running it.
 
-`Last Updated` is the companion date: when this row's content was last
-added or edited, auto-stamped with today's date on the same trigger as
-`Added/Edited By` (content actually changed), unconditionally -- a date
-carries no identity to distrust, so unlike `--actor` it doesn't need a
-trusted caller to set it. This is *not* the resource's own date -- that's
-`Publication/Version Date` (or `Version`, for a resource that has one),
-which nothing here ever touches automatically.
+`Added/Edited By` is self-declared in the cell by default, and overwritten with
+`--actor` on any row whose content changed in this run. Omit `--actor` locally;
+a GitHub Action passes its own trusted identity instead of free text.
 
-Before any of this, the workbook's structure is validated against
-`Dictionary`: if a data sheet's columns don't exactly match what `Dictionary`
-declares for it (same headers, same order), conversion refuses to run at
-all -- no partial/malformed JSON gets written.
+`Last Updated` is stamped with today's date on the same trigger, with no need
+for a trusted caller. It is not the resource's own date, which is
+`Publication/Version Date` or `Version` and is never touched automatically.
 
-When a row's verification is cleared, the corresponding xlsx cells are also
-blanked (the script opens the workbook a second time, in write mode, only for
-this). Without that, a cleared row's still-populated xlsx cell would silently
-leak back into the JSON the next time that row's content changes again,
-un-clearing something that was correctly cleared before -- this is otherwise
-a normal read-only conversion, this is the one exception.
+The workbook's structure is validated against `Dictionary` first. If a data
+sheet's columns do not match what `Dictionary` declares, same headers in the
+same order, conversion refuses to run and writes nothing.
 
-NOTE: adding or removing a column changes every row's content hash, so a
-schema change makes this look like "every row was edited" and would clear all
-verification for rows nobody actually touched. After any schema change, re-run
-with --fresh, which rebuilds the baseline from the workbook instead of diffing
-against the previous (differently-shaped) JSON.
+When a row's verification is cleared, the xlsx cells are blanked too, which is
+the one write in an otherwise read-only conversion. Without it a populated xlsx
+cell would leak back into the JSON on the next content change.
+
+NOTE: adding or removing a column changes every row's content hash, so a schema
+change reads as "every row was edited" and would clear verification repo-wide.
+After any schema change, re-run with --fresh, which rebuilds the baseline from
+the workbook instead of diffing against the previous JSON.
 
 Usage:
     python xlsx_to_json.py [--xlsx PATH] [--out-dir data/json] [--fresh]
@@ -103,9 +82,8 @@ VERIFICATION_FIELDS = ("verified_by", "last_verified")
 def validate_structure(wb, schema: dict) -> None:
     """Raise if any data sheet's columns don't exactly match Dictionary.
 
-    Runs before anything is written, so a malformed upload (wrong/missing/
-    reordered/renamed columns) is rejected outright rather than partially
-    converted.
+    Runs before anything is written, so a wrong, missing, reordered or renamed
+    column is rejected outright rather than partially converted.
     """
     problems = []
     for sheet_name in wb.sheetnames:
@@ -171,10 +149,9 @@ def assign_missing_ids(xlsx_path: Path) -> bool:
 def sheet_to_records(ws, schema: dict) -> tuple[list[dict], list[str], dict[str, int]]:
     """Read a data sheet into records, using the schema to type each column.
 
-    Also returns {natural_key: row_idx}, so the caller can write cleared
-    verification back to the xlsx (see convert()) -- otherwise a cleared
-    row's stale, never-blanked cell would leak back into the JSON the next
-    time that row's content changes again.
+    Also returns {natural_key: row_idx}, so convert() can write cleared
+    verification back to the xlsx. Without it a stale cell leaks back into the
+    JSON on the next content change.
     """
     columns = list(iter_header(ws))
     by_name = {c["name"]: c for c in schema["columns"]}
@@ -207,20 +184,14 @@ def merge_with_previous(
 ) -> tuple[list[dict], list[str], list[str]]:
     """Clear verification on new/changed rows; report what changed.
 
-    `actor`, when given, overwrites `added_edited_by` on any row whose
-    content actually changed in this run (new row, or hash differs from the
-    known baseline) -- an authoritative stamp of who/what made the edit,
-    taking priority over whatever was self-declared in the cell. Left alone
-    entirely when `actor` is None (e.g. a local run with no trusted identity
-    to attribute changes to).
+    `actor`, when given, overwrites `added_edited_by` on any row whose content
+    changed in this run, taking priority over the self-declared cell value.
+    Left alone when `actor` is None, as on a local run.
 
-    `last_updated` -- the date THIS ROW was last added or edited, not the
-    resource's own date (that's `publication_version_date`) -- is stamped
-    with `today` on the same trigger, unconditionally: unlike `actor`, a
-    date carries no identity to be untrusted, so there's no reason to gate
-    it behind a trusted-caller check the way `actor` is. Defaults to the
-    real current date; overridable for tests and for a deliberate historical
-    backfill (never for normal runs).
+    `last_updated` is when this row was last added or edited, not the
+    resource's own date, which is `publication_version_date`. Stamped with
+    `today` on the same trigger and not gated on a trusted caller, since a date
+    carries no identity. Overridable for tests and historical backfill.
     """
     if today is None:
         today = datetime.date.today().isoformat()
@@ -245,13 +216,10 @@ def merge_with_previous(
             merged.append(record)
             continue
 
-        # content_hash() excludes verified_by/last_verified, so "content unchanged"
-        # and "verification unchanged" are independent facts -- a human can edit
-        # only the verification fields (e.g. filling in a fresh Last Verified with
-        # no other change) without the hash moving at all. Comparing against the
-        # value last recorded in the JSON (not merely checking "is it non-blank
-        # now") is what distinguishes a fresh edit from a stale value just sitting
-        # there unchanged from a previous, now-outdated verification.
+        # content_hash() excludes verified_by/last_verified, so content and
+        # verification change independently. Compare against the value last
+        # recorded in the JSON, not merely "is it non-blank now", to tell a
+        # fresh edit from a stale value left over from an older verification.
         prev_verified_by = prev_record.get("verified_by", "") if prev_record else ""
         prev_last_verified = prev_record.get("last_verified", "") if prev_record else ""
         verified_by, last_verified = record.get("verified_by", ""), record.get("last_verified", "")
@@ -276,11 +244,9 @@ def merge_with_previous(
             # being the human's verification channel.
             pass
         else:
-            # Not a fresh, deliberate re-verification -- force fully blank.
-            # Forcing blank even when it was already blank matters: without it, a
-            # stale non-blank xlsx cell that was never physically cleared (see the
-            # write-back step in convert()) would leak back in here and silently
-            # un-clear a row that was correctly cleared before.
+            # Not a fresh re-verification, so force fully blank. Forcing it even
+            # when already blank stops a stale xlsx cell that was never cleared
+            # from leaking back in, see the write-back in convert().
             was_verified = bool(verified_by or last_verified)
             record["verified_by"] = ""
             record["last_verified"] = ""
@@ -323,12 +289,9 @@ def convert(xlsx_path: Path, out_dir: Path, fresh: bool = False, actor: str | No
     # drift apart.
     to_stamp: list[tuple[str, int, str]] = []
 
-    # (sheet_name, row_idx, value) for rows where last_updated was
-    # auto-stamped in memory -- same drift risk as to_stamp above, but for
-    # last_updated instead of added_edited_by: without writing it back, the
-    # xlsx cell keeps its stale value, and the *next* run reads that stale
-    # value as the row's current last_updated and silently reverts the
-    # stamp, since a no-op run never re-stamps it.
+    # (sheet_name, row_idx, value) for rows where last_updated was auto-stamped
+    # in memory. Same drift risk as to_stamp above: unwritten, the xlsx keeps
+    # the stale value and the next run reads it back, reverting the stamp.
     to_stamp_last_updated: list[tuple[str, int, str]] = []
 
     # Per-sheet results, kept until every sheet's been processed -- a row
@@ -382,9 +345,8 @@ def convert(xlsx_path: Path, out_dir: Path, fresh: bool = False, actor: str | No
         for key in cleared:
             print(f"  cleared verification: {key!r} (content changed)")
 
-    # Now that every sheet's current contents are known, classify each
-    # removed row as a move (same ID found in a different sheet) or a
-    # deletion (found nowhere) -- see checklist item 14/15 in the sync plan.
+    # Now that every sheet's current contents are known, classify each removed
+    # row as a move (same ID found in a different sheet) or a deletion.
     for sheet_name, removed in sheet_removed.items():
         for row_id in removed:
             if row_id in present_elsewhere:
@@ -393,7 +355,7 @@ def convert(xlsx_path: Path, out_dir: Path, fresh: bool = False, actor: str | No
             else:
                 print(
                     f"  DELETED from {sheet_name}, id {row_id} -- no match in any other sheet. "
-                    "Not blocked by this script; requires an admin-merged PR (checklist item 19, not yet enforced)."
+                    "Not blocked here; check_deletion_authorization.py requires an admin approval on the PR."
                 )
 
     wb.close()

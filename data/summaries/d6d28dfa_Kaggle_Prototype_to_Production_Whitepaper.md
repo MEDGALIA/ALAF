@@ -4,7 +4,7 @@ resource_name: Kaggle Prototype to Production Whitepaper
 url: https://www.kaggle.com/whitepaper-prototype-to-production
 summarized_date: 2026-11-24
 summarized_by: @pbuendia
-reviewed_by:
+reviewed_by: @patbuen1
 ---
 
 Technical guide (Google, updated May 2026) on moving AI agents from prototype to production. This summary covers only the security-relevant material, filtered for scientific research data processing involving PII and IP. Skipped: People/Process org chart, CI/CD mechanics, rollout strategies, A2A/MCP interoperability, and tool/agent registries.

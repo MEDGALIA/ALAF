@@ -23,8 +23,25 @@
         <p class="topbar__sub">VANTAGE Technology Radar knowledge base</p>
       </div>
     </div>
-    <div class="topbar__auth" id="auth"></div>
+    <div class="topbar__actions">
+      <button type="button" class="btn btn--secondary" id="open-checklist">
+        ALAF Checklist
+      </button>
+      <div class="topbar__auth" id="auth"></div>
+    </div>
   </header>
+
+  <!-- Reader for data/alaf/ALAF_CHECKLIST.md, addressable as #checklist. (#40) -->
+  <div class="reader" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="reader-title">
+    <div class="reader__head">
+      <div>
+        <h2 id="reader-title">ALAF Readiness Checklist</h2>
+        <p class="reader__meta" id="reader-meta"></p>
+      </div>
+      <button type="button" class="btn btn--secondary" id="close-reader">Close</button>
+    </div>
+    <div class="reader__body" id="reader-body"></div>
+  </div>
 
   <noscript>
     <p class="banner banner--error">

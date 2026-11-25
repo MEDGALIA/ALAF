@@ -1,25 +1,19 @@
 """Required status check: a PR that deletes a VT Radar row needs an admin's
 approval before it can merge.
 
-Compares data/json/*.json between a PR's base and head to find any row ID
-that disappears from *every* data sheet (a true deletion, not a move to
-another sheet -- xlsx_to_json.py already reports the same distinction on
-stdout during conversion; this recomputes it independently since it runs
-against the JSON diff in a PR, not against an xlsx being converted).
+Compares data/json/*.json between a PR's base and head to find any row ID that
+disappears from every data sheet, a true deletion rather than a move to another
+sheet. Computed from the JSON diff, independently of xlsx_to_json.py.
 
-If no true deletion is found, the check passes immediately -- ordinary edits
-never need an admin's attention. If one is found, the check only passes if
-the PR already carries an APPROVED review from someone on the admin list
-(.github/RADAR-ADMINS). This deliberately checks *approval*, not *merge*:
-a required status check runs before the Merge button is even clickable, so
-it has no way to know who will eventually click it -- only who has already
-reviewed. (An earlier version of this design tried to key off who merges,
-which turned out not to be checkable pre-merge at all.)
+If no true deletion is found, the check passes immediately. If one is found, it
+passes only when the PR already carries an APPROVED review from someone on
+.github/RADAR-ADMINS.
 
-A repo admin can always merge past a failing required check via branch
-protection's "include administrators" bypass -- this check doesn't need to
-special-case a solo admin proposing their own deletion, the same way the
-existing required-review rule doesn't either.
+Checks approval, not merge: a required status check runs before the Merge
+button is clickable, so it can only know who has already reviewed.
+
+A repo admin can still merge past a failing required check via their branch
+protection bypass.
 
 Usage:
     python check_deletion_authorization.py --base-dir DIR --head-dir DIR

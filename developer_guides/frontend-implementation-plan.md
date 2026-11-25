@@ -15,7 +15,9 @@ The frontend implementation plan has three steps so far:
 - [x] 6. One-click row verification, see `Verify`
 - [x] 7. Read, write and edit resource summaries, see `Resource Summaries`
 - [x] 8. Deployment notes, see `Deployment`
-- [ ] 9. Human verification of agentic updates, see `Human Verification of Agentic Updates`
+- [x] 9. ALAF checklist reader, see `ALAF Checklist Reader`
+- [ ] 10. Edit the ALAF checklist from the UI, as summaries are edited, see `ALAF Checklist Reader`
+- [ ] 11. Human verification of agentic updates, see `Human Verification of Agentic Updates`
 
 ## Architecture
 
@@ -52,16 +54,52 @@ A curator listed in `.github/CODEOWNERS` can tick rows in the table and mark the
 
 Each resource may have a Markdown summary in `data/summaries/`, named `<id>_<resource name>.md`. The id prefix maps a file to its row, so no column stores a link. Discovery needs one REST call to list the directory; if it fails the summary affordances are hidden and nothing else is affected. Markdown is escaped before rendering and link hrefs are limited to http, https and mailto. The UI shows which resources have one, renders it in the drawer with its provenance line, and lets a curator write or edit one. Summaries are staged and submitted in the same pull request as row edits. `reviewed_by` is stamped from the approving review on merge.
 
+## ALAF Checklist Reader
+
+`data/alaf/ALAF_CHECKLIST.md` is read in a full-page panel opened from the header, addressable as `#checklist` so the README can link to it and a reload keeps the panel open. Content comes from `raw.githubusercontent.com` like every other read, so nothing Markdown is served from `docs/`.
+
+`markdown.js` covers the constructs the checklist uses that summaries do not: GFM tables, horizontal rules, task list items, and in-document anchors. Task boxes render disabled, the repository copy is the template rather than an answer sheet. Heading ids use GitHub's slug so a link written for github.com resolves in the panel, and anchor clicks are intercepted to scroll within the panel instead of replacing the route. Front matter is stripped and shown as a provenance line.
+
+**Not built yet (item 10):** the panel is read-only, so the checklist is edited on github.com. Planned is the same editor summaries use, write and preview tabs, staged into the same pull request, with `reviewed_by` stamped on approval. The stamping half already works, `stamp_markdown` covers `data/alaf` alongside `data/summaries`.
+
 ## Local development
 
-To test the UI locally, no build step in needed. Serve the folder and open it:
+Two ways to run the UI locally. Pick by whether the data you need is already on `main`.
 
-```powershell
-cd docs
-python -m http.server 8000
-```
+Opening `index.html` from the filesystem does not work either way, because ES modules are blocked over `file://`.
 
-Then open http://localhost:8000. Reads come from `raw.githubusercontent.com` and writes go to `api.github.com`, so everything including sign-in behaves as it does in production. Opening `index.html` from the filesystem does not work, because ES modules are blocked over `file://`.
+### Option 1: data is already on main
+
+No build step. Serve `docs/` and open it:
+
+1. `cd docs`
+2. `python -m http.server 8000`
+3. Open [http://localhost:8000](http://localhost:8000)
+
+Reads come from `raw.githubusercontent.com` and writes go to `api.github.com`, so sign-in and editing behave as they do in production.
+
+### Option 2: data is only on your branch
+
+`DEFAULT_BRANCH` in `config.js` is `main`, so the UI reads `main` no matter which branch you are on or which branch Pages serves. A file added on a branch is invisible until it merges, and the request 404s.
+
+`src/scripts/serve_ui_locally.py` copies `docs/` to `.local-ui/` (gitignored), repoints `RAW_BASE` at localhost, and stages `data/json`, `data/summaries` and `data/alaf` from the working tree under a `main/` folder so the raw URL shape still matches.
+
+1. From the repository root, build and serve:
+
+   ```powershell
+   python src/scripts/serve_ui_locally.py --build --serve --port 8123
+   ```
+
+2. Open [http://localhost:8123](http://localhost:8123). The table and the `ALAF Checklist` panel now read your working tree.
+3. Stop with `Ctrl+C`.
+
+**`.local-ui/` is a copy, not a symlink.** Editing `docs/` changes nothing in the running site until you re-run with `--build`. Expect to see your old code and assume the change failed otherwise.
+
+Writes still target the real `api.github.com`, so use this for read and render checks, not for staging edits. Full argument list in `scripts-guide.md`.
+
+### What local testing cannot cover
+
+Verification stamping runs on `pull_request: closed`, so steps that depend on it need a real merged pull request. No local harness substitutes for that.
 
 ## Deployment
 

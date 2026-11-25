@@ -61,7 +61,8 @@ Every push of a docker release tag triggers a full multi-arch Docker build (~20â
 
 ## 8. Commenting style and guide editing
 
-Keep comments and user or developer guides concise. A mention of why decisions was made has to be one sentence or shorter. Avoid AI-Slop. No em-dashes, instead use commas or reformulate. Mention, if applicable, the Github issue number that is relevant by adding it in parenthesis.
+Keep comments and user or developer guides concise. A mention of why decisions was made has to be one sentence or shorter. Avoid AI-Slop. No em-dashes, instead use commas or reformulate. Mention, if applicable, the Github issue number that is relevant by adding it in parenthesis. Do not refer to files in .gitignore.
+
 E.g.: A developer following a guide to deploy a release doesn't need an incident report
 
 Example:

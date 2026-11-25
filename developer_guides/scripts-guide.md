@@ -150,6 +150,8 @@ Read-only analysis of the workbook, never opens it in write mode, and asserts th
 
 - `--xlsx PATH`: workbook to scan (default: `data/VANTAGE-Technology-Radar.xlsx`)
 - `--out PATH`: Markdown report destination (default: `data/reports/workbook_analysis.md`)
+- `--checklist PATH`: readiness checklist to compare against (default: `data/alaf/ALAF_CHECKLIST.md`)
+- `--fail-on-drift`: exit 1 if the checklist headings and the mapping vocabulary disagree, naming each term and heading plus the fix. Used by `checklist-drift.yml` on pull requests touching `data/alaf/**`, the workbook or `dictionary.json`. The report is still written first.
 
 **What it reports**
 
@@ -159,6 +161,7 @@ Read-only analysis of the workbook, never opens it in write mode, and asserts th
 - **Missing controlled values**: populated rows with an empty controlled-vocabulary cell, which is usually an oversight rather than a deliberate "not applicable".
 - **Ontology coverage**: which vocabulary terms are backed by a declared standard and which aren't.
 - **Review candidates**: near-duplicate term pairs (one term's words a subset of another's, e.g. `Retrieval` vs `Retrieval Agents`). Not auto-merged.
+- **Checklist drift**: `ALAF Checklist Mapping` terms against the checklist's own `##` headings. Headings may be numbered `## 1. Title` or `## (1) Title`.
 
 The script is report-only. No corrected value is ever suggested or written.
 
@@ -179,6 +182,40 @@ Pushes the workbook to a Google Sheet, see the "VT Radar Google Drive Viewing Mi
 - `--config PATH`: RADAR-CONFIG path (default: `.github/RADAR-CONFIG`)
 
 Target Sheet is `gdrive_file_id` in `.github/RADAR-CONFIG`, not a secret; access is controlled by the Sheet's sharing settings. `files.update()` replaces the Sheet's entire content with the latest xlsx, converted via `mimeType: application/vnd.google-apps.spreadsheet`.
+
+## `serve_ui_locally.py`
+
+```powershell
+.\.venv\Scripts\python src\scripts\serve_ui_locally.py --build --serve --port 8123
+```
+
+Serves the curator UI against the working tree instead of GitHub, so a data file can be exercised before it exists on `main`. Copies `docs/` to `.local-ui/` (gitignored), rewrites `RAW_BASE` in the copy's `config.js` to the local server, and places `data/json`, `data/summaries` and `data/alaf` under a `main/` folder so the raw URL shape still matches.
+
+**Arguments**
+
+- `--build`: rebuild `.local-ui/` from `docs/`. Run it after editing anything in `docs/`, the copy is not live.
+- `--serve`: serve `.local-ui/` on localhost
+- `--port N`: port (default: 8123), baked into the rewritten `RAW_BASE`
+
+Starting it twice on one port exits with "already in use", which Windows would otherwise allow, serving requests from either process.
+
+Writes still target the real `api.github.com`, so use it for read and render checks, not for staging edits. For plain UI work with data already on `main`, `cd docs` and `python -m http.server` is enough.
+
+## `src/tests/`
+
+```powershell
+.\.venv\Scripts\python src\tests\run_all.py
+```
+
+Three suites, no dependencies beyond Python and Node, no network and no browser. Run them after changing `docs/markdown.js`, `stamp_verification.py`, or anything under `data/summaries/` and `data/alaf/`.
+
+| Suite | Covers |
+|---|---|
+| `test_stamp_markdown.py` | `stamp_markdown` stamps a changed file with a blank `reviewed_by`, skips an unchanged one, never overwrites an existing reviewer, and leaves the body alone |
+| `test_markdown_render.mjs` | The checklist renders through `markdown.js` with its task boxes, tables, rules, heading ids, anchors and escapes intact, and no script tags or `javascript:` URLs |
+| `test_summary_render.mjs` | Every file in `data/summaries/` still renders, so a change made for the checklist cannot break summaries |
+
+Each runs standalone too, and exits non-zero on failure. `run_all.py` skips a suite with a message if `node` is not on PATH rather than failing.
 
 ## Adding a new document to convert
 
