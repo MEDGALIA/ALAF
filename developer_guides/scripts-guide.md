@@ -201,6 +201,23 @@ Starting it twice on one port exits with "already in use", which Windows would o
 
 Writes still target the real `api.github.com`, so use it for read and render checks, not for staging edits. For plain UI work with data already on `main`, `cd docs` and `python -m http.server` is enough.
 
+## `check_data_review.py`
+
+```powershell
+.\.venv\Scripts\python src\scripts\check_data_review.py --repo MEDGALIA/ALAF --pr-number 46
+```
+
+Required status check behind `data-review.yml`. A PR changing nothing under `data/` passes at once, so a guide or code fix needs no second reviewer. A PR changing anything under `data/` passes only once someone CODEOWNERS lists for those paths has approved it. Fails closed: any error, unreadable CODEOWNERS or failed API call exits non-zero.
+
+**Arguments**
+
+- `--repo owner/repo`: required
+- `--pr-number N`: required
+- `--codeowners PATH`: default `.github/CODEOWNERS`
+- `--data-prefix PREFIX`: default `data/`
+
+A path under `data/` that matches no CODEOWNERS pattern falls back to the union of all `data/` owners, so a new folder is never left ungated. The workflow checks out the base branch, so a PR cannot widen its own approver list by editing CODEOWNERS in the same PR.
+
 ## `src/tests/`
 
 ```powershell
@@ -211,6 +228,7 @@ Three suites, no dependencies beyond Python and Node, no network and no browser.
 
 | Suite | Covers |
 |---|---|
+| `test_data_review.py` | The `data/` review gate: a guide-only PR passes unapproved, a `data/` PR blocks, a curator's approval releases it. Also CODEOWNERS glob matching, dismissed approvals, and the fail-closed path |
 | `test_front_matter_yaml.py` | Front matter in `data/summaries/` and `data/alaf/` parses as YAML. GitHub renders it as a table and shows a parse error instead of the file when it does not, and `@` cannot start a plain YAML scalar, so handles are quoted |
 | `test_stamp_markdown.py` | `stamp_markdown` stamps a changed file with a blank `reviewed_by`, skips an unchanged one, never overwrites an existing reviewer, and leaves the body alone |
 | `test_markdown_render.mjs` | The checklist renders through `markdown.js` with its task boxes, tables, rules, heading ids, anchors and escapes intact, and no script tags or `javascript:` URLs |

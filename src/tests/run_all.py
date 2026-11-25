@@ -14,6 +14,7 @@ REPO = Path(__file__).resolve().parents[2]
 TESTS = Path(__file__).resolve().parent
 
 SUITES = [
+    ([sys.executable, str(TESTS / "test_data_review.py")], "data review gate"),
     ([sys.executable, str(TESTS / "test_front_matter_yaml.py")], "front matter yaml"),
     ([sys.executable, str(TESTS / "test_stamp_markdown.py")], "stamp_markdown"),
     (["node", str(TESTS / "test_markdown_render.mjs")], "markdown render"),
