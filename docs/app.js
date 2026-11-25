@@ -68,13 +68,16 @@ function summaryFileText(entry) {
   const { record, body, summarizedBy, summarizedDate } = entry;
   // reviewed_by stays empty: the approving reviewer is stamped on merge by
   // stamp-verification.yml, the same rule rows already follow. (#36)
+  // Values are quoted because front matter is parsed as YAML, where "@" cannot
+  // start a plain scalar and a colon in a title would split the pair. (#40)
+  const yamlStr = (v) => `"${String(v ?? "").replace(/"/g, '\\"')}"`;
   return [
     "---",
     `id: ${record.id}`,
-    `resource_name: ${record.resource_name || ""}`,
-    `url: ${record.url || ""}`,
+    `resource_name: ${yamlStr(record.resource_name)}`,
+    `url: ${yamlStr(record.url)}`,
     `summarized_date: ${summarizedDate}`,
-    `summarized_by: ${summarizedBy}`,
+    `summarized_by: ${yamlStr(summarizedBy)}`,
     "reviewed_by:",
     "---",
     "",
