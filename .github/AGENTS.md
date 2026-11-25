@@ -12,8 +12,7 @@ Test guides: Before handing the user a command to run (a test step, a CLI invoca
 
 ## 1. Reuse scripts (Token Economy)
 Always save unnecessary tokens. If a script exists that can run a task where you spend zero tokens, then run the script.
-Example: when generating html, write a script once for that task. After that always run it to generate the html files.
-Do not rewrite the html file manually.
+Example: when generating html, write a script once for that task. After that always run it to generate the html files. Do not modify the HTML file directly, use the script.
 If the script fails, report the failure and only then go and fix the script.
 
 ## 2. Communication style: Brevity is preferred (Token Economy)
@@ -27,16 +26,17 @@ This does not apply to markdown files or planning files in planning mode, which 
 
 ## 3. Review Criteria After Code Changes
 Review the code changes before giving it to me using these criteria:
-- Correctness : logic errors, edge cases, type issues.
-- Code quality : readability, naming, avoiding duplication.
-- Security : input validation, injection risks, data exposure.
-- Architecture : codebase patterns, design consistency, structural alignment.
+- Correctness : avoid logic errors, edge cases, and type issues.
+- Code quality : ensure readability, naming, avoiding duplication, and removing and fixing code duplication where present.
+- Security : focus on input validation, avoid injection risks and data exposure.
+- Architecture : be perfect at codebase patterns, design consistency, structural alignment.
+- Parsimony in Coding: Be parsimonious when architecting code and writing code. Use the smallest, simplest, least‑complex solution that fully solves the problem; no extra layers, no unnecessary abstractions, no over‑engineering.
 
 ## 4. Think of the user in the UI and in the Filesystem exploring results
 
 Example 1 from another project: you may add to a README.md :
 **http://localhost:3080**, or another URL, without a hyperlink.
-But you know it is used to generate the README.html that the user reads and ideally, the user can click the link. So, add a hyperlink: [http://localhost:3080](http://localhost:3080) from the getgo. Don't wait for the user to report it.
+But you know it is used either to generate the README.html or Github will render it as a formatted preview, and ideally, the user can click the link. So, add a hyperlink: [http://localhost:3080](http://localhost:3080) from the getgo. 
 
 Example 2 from another project:
 We decided to rename a pipeline from `reshuffle` to `synthetic_cohort_workflow`. Agent changed the name in the code, but did not change the instruction in the user guide. Agent also did not change the directory name where results are stored. The user will look for "synthetic_cohort_workflow" but the folder name is "reshuffle" in the filesystem. Agent should rename the directory to match the new name OR ask the developer if it is fine to keep it as is.
@@ -45,13 +45,11 @@ We decided to rename a pipeline from `reshuffle` to `synthetic_cohort_workflow`.
 Example: you add a scripts\build-release-package.mjs
 But if not documented in the readme how do developers know it exists and how to use it?
 
-Add information about every new script to a developer.md guide, depending on its reusability value.
+Document reusable scripts in a developer guide (.md). One-off scripts can be skipped.
 
 ## 6. Always investigate inconsistencies that look like errors
 Something that looks like an error may not cause a failure but if spotted, it should be investigated and reported. Example:  
-tags: |
-            docker-image:latest 
-was used in docker\github-workflows-docker-publish.yml but for some reason it did not affect the workflow as images were being pushed correctly to a docker repo. 
+Agent was correcting errors in docker\github-workflows-docker-publish.yml but for some reason the file corrections did not affect the workflow as images were being pushed correctly to a docker repo. 
 The agent was using that file by error and did not realize that the file is old and irrelevant. We later deleted it.
 Always investigate WHY something has no effect and if so, then we do not need to keep it or it will confuse the AI agent and the developer.
 
@@ -61,11 +59,16 @@ Every push of a docker release tag triggers a full multi-arch Docker build (~20�
 
 ## 8. Commenting style and guide editing
 
-Keep comments and user or developer guides concise. A mention of why decisions was made has to be one sentence or shorter. Avoid AI-Slop. No em-dashes, instead use commas or reformulate. Mention, if applicable, the Github issue number that is relevant by adding it in parenthesis. Do not refer to files in .gitignore.
+Keep code comments and user/developer guides concise. A mention of why a decision was made has to be one sentence or shorter. Avoid AI-Slop. No em-dashes, instead use commas or reformulate. Mention, if applicable, the Github issue number that is relevant by adding it in parenthesis. Do not refer to files in .gitignore.
 
-E.g.: A developer following a guide to deploy a release doesn't need an incident report
+What is AI-slop?
+- AI overuses em-dashes 
+- AI likes to say "Not X, but Y" often when it does not need to. E.g.: "a policy, not a mechanism."
 
-Example:
+
+Example 1: A developer following a guide to deploy a release doesn't need an incident report
+
+Example 2:
 ```
     if (!hasUsableSession) {
       // Name WHICH host was checked and whether a session cookie even arrived.
@@ -84,34 +87,35 @@ Write it like this:
       const hadSessionCookie = /(^|;\s*)connect\.sid=/.test(req.headers.cookie || "");
 ```
 
-## 9. Please follow the README.md
-if README.md is wrong let the user know, or ask the user.
+## 9. Ensure the README.md and other .md guides are correct
+If a guide is wrong let the user know, and ask for permission to rewrite it.
 
 ## 10. Fix my typos
-Feel free to fix my spelling in any planning document or .md file where you see typos.
+Fix my spelling in any planning document or .md file where you see typos.
 
 ## 11. Fix obvious errors without asking, don't ignore or work around them
 
 Example: You write a guide, or comment that says "command X does A",
 if then you find out that "command X does B but not A", then fix the guide.
 
-If you discover some code is wrong in a file you are editing  and it is an obvious bug that breaks the feature, and it is wrong, this is the time to fix it. Just fix it and inform me that you are fixing it because it is incorrect. Ask me about it only if you are unsure it is an error and you believe it could be a valid feature. 
+If you discover some code is wrong in a file you are editing  and it is an obvious bug that breaks the feature, and it is wrong, this is the time to fix it. Just fix it and inform me that you are fixing it because it is incorrect. Ask me about it if you are unsure it is an error and you believe it could be a valid feature. 
 
 ## 12. Do not cut corners: Implement solution for a professional business application
 
 Always think ahead, and when planning and implementing a feature or re-architecting a feature, implement solutions for a professional business application, do not cut corners!
 
-Example: if an app is deployed to Google App Engine, and the app has a feature to add and delete profiles, the deletion act should be logged in an audit table in a database or file system. Do not forget to implement that or to add it to the issues.md file.
+Example: if an app is deployed to Google App Engine, and the app has a feature to add and delete profiles, the deletion act should be logged in an audit table in a database or file system. Do not forget to implement that or to add it to an issues file (.md).
 
 ## 13. Avoid duplication of statements in guides and planning files
 
-DO NOT repeat yourself
+DO NOT repeat yourself.
+
 Example:
 Line 266: For a bulk mechanical edit (a typo fixed across 12 rows), the curator did not re-check 12 URLs, so auto-stamping would inflate verification.
 and a few lines down you wrote: 
 Line 272: Worked example: a typo fixed across 12 rows. The curator did not re-open 12 URLs. Without the label, all 12 are marked verified, a false claim. With it, none are. No friction in the common case (one row, genuinely checked), one click in the case that would otherwise lie.
 
-They say the same thing!
+They say the same thing! Mention it once. Reference the first mention where needed.
 
 ## 14. Add ToDo Checklists
 
@@ -123,10 +127,10 @@ Please add ToDo Checklists in these format at the top of each issue or planning 
 - [x] 2. Write `src/scripts/radar_sync_common.py` (shared helpers, reusable across any architecture)
 - [x] 3. Write the read-only data-quality scan as described in section `Data Quality Scan`
 ```
- ## 15. Do not git commit and always work in a branch
+## 15. Do not git commit and always work in a branch
 
 Agent will not git commit, git push, open a PR and merge. Agent will ask the user to do it.
-Always work in a branch. Reuse a branch whenever possible, it is fine to add user guide changes or .md changes to it. Only change branch when starting a new feature or when prompted by user. We will use commits sparingly and selectively.
+Always work in a branch. Reuse a branch whenever possible, it is fine to add user guide changes or .md changes to it. Only change branch when starting a new feature or when prompted by user. We will make commits selectively and with purpose.
 
 ## 16. Do not chain commands
 
@@ -134,14 +138,7 @@ Do not chain commands with &&, ||, or pipes, and do not use multi-line blocks or
 
 ## 17. Do not refer to gitignored files in guides
 
-Do not refer to gitignored files in guides. If a file is in a gitgnored folder called "drafts" do not refer to it from a file that will be pushed to GitHub. 
+Do not refer to gitignored files in guides. If a file is in a gitignored folder called "drafts" do not refer to it from a file that will be pushed to GitHub. 
 
-Public facing planning guides in GitHub, do not need to mention minor features/tasks that were planned but then dropped. They should mention what was built,  at a high level of abstraction, with a short statement of the reason. They should mention what is planned but not build yet. 
+Public facing planning guides in GitHub, do not mention minor features/tasks that were planned but then dropped. They should mention what was built, at a high level of abstraction, with a short statement of the reason. They should mention what is planned but not built yet.
 
-## 18. Review Criteria After Code Changes
-Review the code changes before giving it to me using these criteria:
-- Correctness : avoid logic errors, edge cases, and type issues.
-- Code quality : ensure readability, naming, avoiding duplication, and removing and fixing code duplication where present.
-- Security : focus on input validation, avoid injection risks and data exposure.
-- Architecture : be perfect at codebase patterns, design consistency, structural alignment.
-- Parsimony in Coding: Be parsimonious when architecting code and writing code. Use the smallest, simplest, least‑complex solution that fully solves the problem; no extra layers, no unnecessary abstractions, no over‑engineering.
