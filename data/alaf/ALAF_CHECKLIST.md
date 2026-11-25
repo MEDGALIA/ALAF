@@ -2,7 +2,7 @@
 title: ALAF Readiness Checklist
 updated_date: 2026-11-24
 updated_by: @pbuendia
-reviewed_by:
+reviewed_by: @patbuen1
 ---
 
 # ALAF Readiness Checklist
