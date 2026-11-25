@@ -1,0 +1,38 @@
+name: Checklist drift
+
+# The "ALAF Checklist Mapping" vocabulary terms are named after the checklist's
+# own headings, so renaming either side silently breaks the tagging. This went
+# undetected once already, see the regex fix in tech_radar_analysis.py. (#40)
+#
+# Not a required status check: it reports red on the PR without blocking the
+# merge, so no ruleset change is needed to add it.
+
+on:
+  pull_request:
+    paths:
+      - "data/alaf/**"
+      - "data/VANTAGE-Technology-Radar.xlsx"
+      - "data/json/dictionary.json"
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r src/scripts/requirements.txt
+
+      # Writes the report to a temp path: the committed report is regenerated
+      # deliberately, not as a side effect of a PR check.
+      - name: Compare the checklist against its mapping vocabulary
+        run: |
+          python src/scripts/tech_radar_analysis.py \
+            --fail-on-drift \
+            --out "${RUNNER_TEMP}/workbook_analysis.md"

@@ -16,7 +16,8 @@ The frontend implementation plan has three steps so far:
 - [x] 7. Read, write and edit resource summaries, see `Resource Summaries`
 - [x] 8. Deployment notes, see `Deployment`
 - [x] 9. ALAF checklist reader, see `ALAF Checklist Reader`
-- [ ] 10. Human verification of agentic updates, see `Human Verification of Agentic Updates`
+- [ ] 10. Edit the ALAF checklist from the UI, as summaries are edited, see `ALAF Checklist Reader`
+- [ ] 11. Human verification of agentic updates, see `Human Verification of Agentic Updates`
 
 ## Architecture
 
@@ -59,18 +60,46 @@ Each resource may have a Markdown summary in `data/summaries/`, named `<id>_<res
 
 `markdown.js` covers the constructs the checklist uses that summaries do not: GFM tables, horizontal rules, task list items, and in-document anchors. Task boxes render disabled, the repository copy is the template rather than an answer sheet. Heading ids use GitHub's slug so a link written for github.com resolves in the panel, and anchor clicks are intercepted to scroll within the panel instead of replacing the route. Front matter is stripped and shown as a provenance line.
 
+**Not built yet (item 10):** the panel is read-only, so the checklist is edited on github.com. Planned is the same editor summaries use, write and preview tabs, staged into the same pull request, with `reviewed_by` stamped on approval. The stamping half already works, `stamp_markdown` covers `data/alaf` alongside `data/summaries`.
+
 ## Local development
 
-To test the UI locally, no build step is needed. Serve the folder and open it:
+Two ways to run the UI locally. Pick by whether the data you need is already on `main`.
 
-```powershell
-cd docs
-python -m http.server 8000
-```
+Opening `index.html` from the filesystem does not work either way, because ES modules are blocked over `file://`.
 
-Then open [http://localhost:8000](http://localhost:8000). Reads come from `raw.githubusercontent.com` and writes go to `api.github.com`, so everything including sign-in behaves as it does in production. Opening `index.html` from the filesystem does not work, because ES modules are blocked over `file://`.
+### Option 1: data is already on main
 
-That serves the UI against `main`, so a data file added on a branch is not visible until it merges. To exercise one before then, `src/scripts/serve_ui_locally.py` serves a copy of `docs/` pointed at the working tree. See `scripts-guide.md`.
+No build step. Serve `docs/` and open it:
+
+1. `cd docs`
+2. `python -m http.server 8000`
+3. Open [http://localhost:8000](http://localhost:8000)
+
+Reads come from `raw.githubusercontent.com` and writes go to `api.github.com`, so sign-in and editing behave as they do in production.
+
+### Option 2: data is only on your branch
+
+`DEFAULT_BRANCH` in `config.js` is `main`, so the UI reads `main` no matter which branch you are on or which branch Pages serves. A file added on a branch is invisible until it merges, and the request 404s.
+
+`src/scripts/serve_ui_locally.py` copies `docs/` to `.local-ui/` (gitignored), repoints `RAW_BASE` at localhost, and stages `data/json`, `data/summaries` and `data/alaf` from the working tree under a `main/` folder so the raw URL shape still matches.
+
+1. From the repository root, build and serve:
+
+   ```powershell
+   python src/scripts/serve_ui_locally.py --build --serve --port 8123
+   ```
+
+2. Open [http://localhost:8123](http://localhost:8123). The table and the `ALAF Checklist` panel now read your working tree.
+3. Stop with `Ctrl+C`.
+
+**`.local-ui/` is a copy, not a symlink.** Editing `docs/` changes nothing in the running site until you re-run with `--build`. Expect to see your old code and assume the change failed otherwise.
+
+Writes still target the real `api.github.com`, so use this for read and render checks, not for staging edits. Full argument list in `scripts-guide.md`.
+
+### What local testing cannot cover
+
+Verification stamping runs on `pull_request: closed`, so steps that depend on it need a real merged pull request. No local harness substitutes for that.
 
 ## Deployment
 

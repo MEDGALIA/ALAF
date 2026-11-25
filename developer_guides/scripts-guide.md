@@ -151,6 +151,7 @@ Read-only analysis of the workbook, never opens it in write mode, and asserts th
 - `--xlsx PATH`: workbook to scan (default: `data/VANTAGE-Technology-Radar.xlsx`)
 - `--out PATH`: Markdown report destination (default: `data/reports/workbook_analysis.md`)
 - `--checklist PATH`: readiness checklist to compare against (default: `data/alaf/ALAF_CHECKLIST.md`)
+- `--fail-on-drift`: exit 1 if the checklist headings and the mapping vocabulary disagree, naming each term and heading plus the fix. Used by `checklist-drift.yml` on pull requests touching `data/alaf/**`, the workbook or `dictionary.json`. The report is still written first.
 
 **What it reports**
 

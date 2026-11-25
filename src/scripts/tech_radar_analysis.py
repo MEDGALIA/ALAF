@@ -429,6 +429,8 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--checklist", type=Path, default=DEFAULT_CHECKLIST,
                         help="ALAF checklist to compare the mapping vocabulary against")
+    parser.add_argument("--fail-on-drift", action="store_true",
+                        help="exit 1 if the checklist and its mapping vocabulary disagree")
     args = parser.parse_args()
 
     before_bytes = args.xlsx.read_bytes()
@@ -451,6 +453,49 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(report, encoding="utf-8", newline="\n")
     print(f"Wrote {args.out}")
+
+    if args.fail_on_drift and checklist_drift:
+        report_drift_failure(checklist_drift, args.checklist)
+
+
+def report_drift_failure(drift: dict, checklist_path: Path) -> None:
+    """Exit 1 naming each term and item that disagree, and how to fix it. (#40)"""
+    orphans, unmapped = drift["orphan_terms"], drift["unmapped_items"]
+    if not orphans and not unmapped:
+        return
+
+    lines = [
+        "",
+        "CHECKLIST DRIFT: the 'ALAF Checklist Mapping' vocabulary and the checklist",
+        f"headings in {checklist_path.as_posix()} no longer agree.",
+        "",
+    ]
+    if orphans:
+        lines += [
+            "Vocabulary terms with no matching checklist heading.",
+            "A resource tagged with these now points at nothing:",
+        ]
+        lines += [f"  - {t}" for t in sorted(orphans)]
+        lines += [
+            "",
+            "  Fix: rename the term on the workbook's Vocabulary tab to match the",
+            "  heading, or restore the heading in the checklist.",
+            "",
+        ]
+    if unmapped:
+        lines += [
+            "Checklist headings with no matching vocabulary term.",
+            "No resource can be tagged against these:",
+        ]
+        lines += [f"  - {h}" for h in sorted(unmapped)]
+        lines += [
+            "",
+            "  Fix: add the term to the workbook's Vocabulary tab under",
+            "  'ALAF Checklist Mapping', then re-run xlsx_to_json.py.",
+            "",
+        ]
+    lines.append(f"Full report: {DEFAULT_OUT.as_posix()}")
+    raise SystemExit("\n".join(lines))
 
 
 if __name__ == "__main__":
