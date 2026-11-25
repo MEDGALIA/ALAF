@@ -197,7 +197,25 @@ Serves the curator UI against the working tree instead of GitHub, so a data file
 - `--serve`: serve `.local-ui/` on localhost
 - `--port N`: port (default: 8123), baked into the rewritten `RAW_BASE`
 
+Starting it twice on one port exits with "already in use", which Windows would otherwise allow, serving requests from either process.
+
 Writes still target the real `api.github.com`, so use it for read and render checks, not for staging edits. For plain UI work with data already on `main`, `cd docs` and `python -m http.server` is enough.
+
+## `src/tests/`
+
+```powershell
+.\.venv\Scripts\python src\tests\run_all.py
+```
+
+Three suites, no dependencies beyond Python and Node, no network and no browser. Run them after changing `docs/markdown.js`, `stamp_verification.py`, or anything under `data/summaries/` and `data/alaf/`.
+
+| Suite | Covers |
+|---|---|
+| `test_stamp_markdown.py` | `stamp_markdown` stamps a changed file with a blank `reviewed_by`, skips an unchanged one, never overwrites an existing reviewer, and leaves the body alone |
+| `test_markdown_render.mjs` | The checklist renders through `markdown.js` with its task boxes, tables, rules, heading ids, anchors and escapes intact, and no script tags or `javascript:` URLs |
+| `test_summary_render.mjs` | Every file in `data/summaries/` still renders, so a change made for the checklist cannot break summaries |
+
+Each runs standalone too, and exits non-zero on failure. `run_all.py` skips a suite with a message if `node` is not on PATH rather than failing.
 
 ## Adding a new document to convert
 

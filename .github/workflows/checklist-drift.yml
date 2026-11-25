@@ -1,11 +1,9 @@
 name: Checklist drift
 
 # The "ALAF Checklist Mapping" vocabulary terms are named after the checklist's
-# own headings, so renaming either side silently breaks the tagging. This went
-# undetected once already, see the regex fix in tech_radar_analysis.py. (#40)
+# own headings, so renaming either side silently breaks the tagging. (#40)
 #
-# Not a required status check: it reports red on the PR without blocking the
-# merge, so no ruleset change is needed to add it.
+# Not a required status check: reports red on the PR without blocking the merge.
 
 on:
   pull_request:

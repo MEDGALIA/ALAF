@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import functools
 import http.server
+import os
 import re
 import shutil
 import socketserver
@@ -51,10 +52,28 @@ def build(port: int) -> Path:
 
 def serve(port: int) -> None:
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(OUT))
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("127.0.0.1", port), handler) as httpd:
+    # Windows SO_REUSEADDR lets a second process bind a port that is already
+    # being listened on, and requests then reach either server. Leave it off
+    # there so a duplicate fails loudly instead of silently serving stale
+    # files. On POSIX it only reclaims a TIME_WAIT socket, which is wanted. (#40)
+    socketserver.TCPServer.allow_reuse_address = os.name != "nt"
+    try:
+        httpd = socketserver.TCPServer(("127.0.0.1", port), handler)
+    except OSError as err:
+        raise SystemExit(
+            f"Port {port} is already in use. Stop the other server, or pass a "
+            f"different --port. On Windows: netstat -ano | findstr :{port}"
+        ) from err
+    with httpd:
         print(f"Serving {OUT} at http://localhost:{port}")
-        httpd.serve_forever()
+        print("Press Ctrl+C to stop.")
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            # Ctrl+C is how this is meant to end, so report it as a normal stop
+            # rather than letting the traceback through. (#40)
+            print("\nStopped.")
+            httpd.shutdown()
 
 
 def main() -> None:

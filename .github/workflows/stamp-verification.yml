@@ -6,9 +6,6 @@ name: Stamp verification on approval
 # data/summaries and data/alaf changed by the PR get the same treatment on
 # their `reviewed_by` front matter field. (#36, #40)
 #
-# No `paths:` filter, so a PR touching only data/alaf still reaches this job.
-# Adding one later must include data/alaf/** or checklist stamping stops. (#40)
-#
 # Pushes straight to main: authenticates as the vt-radar-verification-bot
 # GitHub App, which main's branch protection names as a bypass actor.
 # VT_RADAR_APP_ID/VT_RADAR_APP_PRIVATE_KEY mint a short-lived installation
@@ -161,8 +158,7 @@ jobs:
           set -euo pipefail
           git config user.name "vt-radar-verification-bot[bot]"
           git config user.email "vt-radar-verification-bot[bot]@users.noreply.github.com"
-          # Staging is separate from stamping: a stamped file that is never
-          # staged is never pushed. (#40)
+          # Must list every directory the stamp step writes, or the stamp is lost. (#40)
           git add data/json/ data/VANTAGE-Technology-Radar.xlsx data/summaries/ data/alaf/
           if git diff --cached --quiet; then
             echo "No file changes to push."
