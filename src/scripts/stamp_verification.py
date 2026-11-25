@@ -128,8 +128,10 @@ def stamp_markdown(head_dir: Path, base_dir: Path, reviewer: str) -> list[str]:
         base_path = base_dir / path.name
         if base_path.exists() and base_path.read_text(encoding="utf-8") == text:
             continue
+        # Quoted: "@" is a reserved YAML indicator and cannot start a plain
+        # scalar, so an unquoted handle breaks GitHub's front matter render. (#40)
         updated, count = re.subn(
-            r"(?m)^reviewed_by:[^\S\r\n]*$", f"reviewed_by: {reviewer}", text, count=1
+            r"(?m)^reviewed_by:[^\S\r\n]*$", f'reviewed_by: "{reviewer}"', text, count=1
         )
         if count:
             path.write_text(updated, encoding="utf-8", newline="\n")

@@ -9,7 +9,8 @@ export function parseFrontMatter(text) {
   const meta = {};
   for (const line of match[1].split(/\r?\n/)) {
     const pair = /^([A-Za-z0-9_]+):\s*(.*)$/.exec(line);
-    if (pair) meta[pair[1]] = pair[2].trim();
+    // Values are written quoted for YAML's sake; show them without. (#40)
+    if (pair) meta[pair[1]] = pair[2].trim().replace(/^"(.*)"$/s, "$1").replace(/\\"/g, '"');
   }
   return { meta, body: text.slice(match[0].length) };
 }

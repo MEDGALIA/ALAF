@@ -211,6 +211,7 @@ Three suites, no dependencies beyond Python and Node, no network and no browser.
 
 | Suite | Covers |
 |---|---|
+| `test_front_matter_yaml.py` | Front matter in `data/summaries/` and `data/alaf/` parses as YAML. GitHub renders it as a table and shows a parse error instead of the file when it does not, and `@` cannot start a plain YAML scalar, so handles are quoted |
 | `test_stamp_markdown.py` | `stamp_markdown` stamps a changed file with a blank `reviewed_by`, skips an unchanged one, never overwrites an existing reviewer, and leaves the body alone |
 | `test_markdown_render.mjs` | The checklist renders through `markdown.js` with its task boxes, tables, rules, heading ids, anchors and escapes intact, and no script tags or `javascript:` URLs |
 | `test_summary_render.mjs` | Every file in `data/summaries/` still renders, so a change made for the checklist cannot break summaries |
