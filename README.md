@@ -45,7 +45,6 @@ data. Seven items, each with a blocker rule.
 ALAF is currently being developed as an open-source project in alignment
 with proposed activities for the VANTAGE WG.
 
-
 ## Objectives
 
 ALAF aims to provide a lightweight and extensible framework for:
