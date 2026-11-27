@@ -26,7 +26,7 @@ The VT Radar knowledge base is browsed and edited at
 **[medgalia.github.io/ALAF](https://medgalia.github.io/ALAF/)**.
 
 Anyone can browse, search and filter it without signing in. Editing needs a GitHub account with
-write access to this repository, granted to VANTAGE Working Group collaborators, and every
+write access to this repository, granted to VANTAGE Working Group (WG) collaborators, and every
 change becomes a pull request another curator reviews. See
 [user_guides/VT_RADAR.md](user_guides/VT_RADAR.md).
 
@@ -43,7 +43,7 @@ data. Seven items, each with a blocker rule.
 **Early development / experimental**
 
 ALAF is currently being developed as an open-source project in alignment
-with proposed activities for a new Working group.
+with proposed activities for the VANTAGE WG.
 
 
 ## Objectives
